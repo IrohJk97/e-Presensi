@@ -97,8 +97,10 @@ class _HomePageState extends State<HomePage> {
               padding: EdgeInsets.only(bottom: 20),
               child: ElevatedButton.icon(
                 onPressed: () {
-                  // Add login functionality here
-                  print('Login button pressed');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
                 },
                 icon: Icon(Icons.login),
                 label: Text('Login'),
