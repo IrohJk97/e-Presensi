@@ -222,7 +222,97 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Future<void> _signIn() async {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
 
+    // Make sure both username and password are provided
+    if (username.isEmpty || password.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Alert"),
+            content: Text("Please enter both username and password."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Execute login API call
+    final url = Uri.parse('https://bayusys.com/api/login');
+    final response = await http.post(
+      url,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'username': username,
+        'password': password,
+      }),
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+    print('Response Status Code: ${response.statusCode}');
+    print('Response Body: ${response.body}');
+
+
+      if (response.statusCode == 200) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Success"),
+              content: Text("Login successful"),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    // Navigate to the next screen
+                    // Navigator.of(context).push(MaterialPageRoute(builder: (context) => NextScreen()));
+                  },
+                  child: Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text("Error"),
+              content: Text("Login failed. Please try again."),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: Text("OK"),
+                ),
+              ],
+            );
+          },
+        );
+      }
+    
+  }
 
   Widget signInButton(Size size) {
     return GestureDetector(
