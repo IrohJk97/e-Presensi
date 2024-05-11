@@ -104,6 +104,7 @@ class _HomePageState extends State<HomePage> {
                 label: Text('Login'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColorSys.primary,
+                  shadowColor: Colors.white,
                   elevation: 0,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(horizontal: 30, vertical: 10),
