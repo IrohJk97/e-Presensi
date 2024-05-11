@@ -11,6 +11,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool rememberMe = false;
+  bool _isPasswordVisible = false;
+  
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -104,7 +106,7 @@ Widget richText(double fontSize) {
 Widget usernameTextField(Size size) {
   return Container(
     alignment: Alignment.center,
-    height: size.height / 11,
+    height: size.height / 14, // Reduced height
     padding: const EdgeInsets.symmetric(horizontal: 16),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(8.0),
@@ -139,43 +141,56 @@ Widget usernameTextField(Size size) {
 
 
 
-Widget passwordTextField(Size size) {
-  return Container(
-    alignment: Alignment.center,
-    height: size.height / 11,
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(8.0),
-      border: Border.all(
-        width: 1.0,
-        color: const Color(0xFFEFEFEF),
-      ),
-    ),
-    child: TextField(
-      style: GoogleFonts.inter(
-        fontSize: 16.0,
-        color: const Color(0xFF15224F),
-      ),
-      maxLines: 1,
-      obscureText: true,
-      keyboardType: TextInputType.visiblePassword,
-      cursorColor: const Color(0xFF15224F),
-      decoration: InputDecoration(
-        labelText: 'Password',
-        labelStyle: GoogleFonts.inter(
-          fontSize: 12.0,
-          color: const Color(0xFF969AA8),
-        ),
-        border: InputBorder.none,
-        contentPadding: EdgeInsets.zero,
-        prefixIcon: Icon(
-          Icons.lock, // Choose an appropriate icon, for example, Icons.lock for password icon
-          color: const Color(0xFF969AA8), // Set the icon color
+
+ Widget passwordTextField(Size size) {
+    return Container(
+      alignment: Alignment.center,
+      height: size.height / 14,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(
+          width: 1.0,
+          color: const Color(0xFFEFEFEF),
         ),
       ),
-    ),
-  );
-}
+      child: TextField(
+        style: GoogleFonts.inter(
+          fontSize: 16.0,
+          color: const Color(0xFF15224F),
+        ),
+        maxLines: 1,
+        obscureText: !_isPasswordVisible, // Toggle obscureText based on _isPasswordVisible
+        keyboardType: TextInputType.visiblePassword,
+        cursorColor: const Color(0xFF15224F),
+        decoration: InputDecoration(
+          labelText: 'Password',
+          labelStyle: GoogleFonts.inter(
+            fontSize: 12.0,
+            color: const Color(0xFF969AA8),
+          ),
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
+          prefixIcon: Icon(
+            Icons.lock,
+            color: const Color(0xFF969AA8),
+          ),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+              color: const Color(0xFF969AA8),
+            ),
+            onPressed: () {
+              setState(() {
+                _isPasswordVisible = !_isPasswordVisible; // Toggle password visibility
+              });
+            },
+          ),
+        ),
+      ),
+    );
+ }
+
 
 
   Widget rememberMeCheckbox() {
