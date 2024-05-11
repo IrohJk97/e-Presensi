@@ -181,6 +181,7 @@ class OnboardingPage extends StatelessWidget {
             duration: Duration(milliseconds: 900),
             child: Text(
               title,
+              textAlign: TextAlign.center, // Tambahkan properti textAlign
               style: TextStyle(
                 color: ColorSys.black,
                 fontSize: 28,
