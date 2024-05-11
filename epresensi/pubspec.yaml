@@ -64,6 +64,7 @@ flutter:
    - assets/images/stepOne.png
    - assets/images/stepTwo.png
    - assets/images/stepThree.png
+   - assets/images/stepFour.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
