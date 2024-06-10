@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'api_urls.dart';  // Import the new file
+import 'home.dart';     // Import the Home screen
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -19,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   bool rememberMe = false;
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -222,97 +222,87 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Future<void> _signIn() async {
-    final username = _usernameController.text;
-    final password = _passwordController.text;
+Future<void> _signIn() async {
+  final username = _usernameController.text;
+  final password = _passwordController.text;
 
-    // Make sure both username and password are provided
-    if (username.isEmpty || password.isEmpty) {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text("Alert"),
-            content: Text("Please enter both username and password."),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                },
-                child: Text("OK"),
-              ),
-            ],
-          );
-        },
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Execute login API call
-    final url = Uri.parse('https://bayusys.com/api/login');
-    final response = await http.post(
-      url,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
+  // Make sure both username and password are provided
+  if (username.isEmpty || password.isEmpty) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Alert"),
+          content: Text("Please enter both username and password."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
       },
-      body: jsonEncode(<String, String>{
-        'username': username,
-        'password': password,
-      }),
     );
-
-    setState(() {
-      _isLoading = false;
-    });
-    print('Response Status Code: ${response.statusCode}');
-    print('Response Body: ${response.body}');
-
-
-      if (response.statusCode == 200) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Success"),
-              content: Text("Login successful"),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                    // Navigate to the next screen
-                    // Navigator.of(context).push(MaterialPageRoute(builder: (context) => NextScreen()));
-                  },
-                  child: Text("OK"),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text("Error"),
-              content: Text("Login failed. Please try again."),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                  },
-                  child: Text("OK"),
-                ),
-              ],
-            );
-          },
-        );
-      }
-    
+    return;
   }
+
+  setState(() {
+    _isLoading = true;
+  });
+
+  // Execute login API call
+  final response = await http.post(
+    Uri.parse(ApiUrls.loginUrl), // Use the URL from the new file
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, String>{
+      'username': username,
+      'password': password,
+    }),
+  );
+
+  setState(() {
+    _isLoading = false;
+  });
+
+  print('Response Status Code: ${response.statusCode}');
+  print('Response Body: ${response.body}');
+
+  if (response.statusCode == 200) {
+    // Extract access token from the response body
+    final responseBody = jsonDecode(response.body);
+    final accessToken = responseBody['authorization']['token'];
+
+    // Store access token for further API requests
+    // Assuming you have a method to store it, for example:
+
+    // Navigate to home page
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => Home(accessToken: accessToken)),
+    );
+  } else {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Error"),
+          content: Text("Login failed. Please try again."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
 
   Widget signInButton(Size size) {
     return GestureDetector(
@@ -353,7 +343,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ],
         ),
-        
       ),
     );
   }
