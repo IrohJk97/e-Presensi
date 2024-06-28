@@ -2,8 +2,10 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-import 'api_urls.dart';  // Import the new file
-import 'home.dart';     // Import the Home screen
+import 'api_urls.dart'; // Import the new file
+import 'home.dart'; // Import the Home screen
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -18,6 +20,23 @@ class _LoginPageState extends State<LoginPage> {
   bool rememberMe = false;
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? accessToken = prefs.getString('access_token');
+    if (accessToken != null && accessToken.isNotEmpty) {
+      // Navigate to Home screen if access token is found
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => Home(accessToken: accessToken)),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -222,87 +241,89 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-Future<void> _signIn() async {
-  final username = _usernameController.text;
-  final password = _passwordController.text;
+  Future<void> _signIn() async {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
 
-  // Make sure both username and password are provided
-  if (username.isEmpty || password.isEmpty) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Alert"),
-          content: Text("Please enter both username and password."),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text("OK"),
-            ),
-          ],
-        );
+    // Make sure both username and password are provided
+    if (username.isEmpty || password.isEmpty) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Alert"),
+            content: Text("Please enter both username and password."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+                child: Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // Execute login API call
+    final response = await http.post(
+      Uri.parse(ApiUrls.loginUrl), // Use the URL from the new file
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
       },
+      body: jsonEncode(<String, String>{
+        'username': username,
+        'password': password,
+      }),
     );
-    return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+    print('Response Body1: ${jsonResponse}');
+
+    if (response.statusCode == 200) {
+       final responseBody = jsonDecode(response.body);
+      final user = responseBody['user'];
+      final accessToken = responseBody['token'];
+
+      // Store user data and access token in SharedPreferences
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('access_token', accessToken);
+      await prefs.setString('user_data', jsonEncode(user));
+
+      Fluttertoast.showToast(
+        msg: "Login successful!",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.green,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+
+      // Navigate to Home screen
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => Home(accessToken: accessToken)),
+      );
+    } else {
+      Fluttertoast.showToast(
+        msg: "Login failed: ${response.statusCode}",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
   }
-
-  setState(() {
-    _isLoading = true;
-  });
-
-  // Execute login API call
-  final response = await http.post(
-    Uri.parse(ApiUrls.loginUrl), // Use the URL from the new file
-    headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
-    body: jsonEncode(<String, String>{
-      'username': username,
-      'password': password,
-    }),
-  );
-
-  setState(() {
-    _isLoading = false;
-  });
-
-  print('Response Status Code: ${response.statusCode}');
-  print('Response Body: ${response.body}');
-
-  if (response.statusCode == 200) {
-    // Extract access token from the response body
-    final responseBody = jsonDecode(response.body);
-    final accessToken = responseBody['authorization']['token'];
-
-    // Store access token for further API requests
-    // Assuming you have a method to store it, for example:
-
-    // Navigate to home page
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => Home(accessToken: accessToken)),
-    );
-  } else {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Error"),
-          content: Text("Login failed. Please try again."),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text("OK"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
 
   Widget signInButton(Size size) {
     return GestureDetector(
