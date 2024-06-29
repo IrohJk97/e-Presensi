@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:epresensi/FormCuti.dart';
 import 'package:epresensi/Profile.dart';
 import 'package:epresensi/login.dart';
 import 'package:flutter/material.dart';
@@ -81,7 +82,7 @@ class _HomeState extends State<Home> {
         children: <Widget>[
           
           Profile(userData: _userData),
-          Center(child: Text('Edit Page')),
+          FormCuti(),
           Center(child: Text('Fingerprint Page')),
           Center(child: Text('Profile Page')),
           Center(child: Text('Phone Page')),
