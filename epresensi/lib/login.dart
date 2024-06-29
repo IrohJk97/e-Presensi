@@ -163,6 +163,8 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+
+
   Widget passwordTextField(Size size) {
     return Container(
       alignment: Alignment.center,
@@ -179,10 +181,11 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: TextField(
         controller: _passwordController,
-        style: GoogleFonts.inter(
-          fontSize: 16.0,
-          color: const Color(0xFF15224F),
-        ),
+         style: GoogleFonts.inter(
+        fontSize: 16.0,
+        color: Colors.white, // Set text color to white
+        fontWeight: FontWeight.bold, // Make text bold
+      ),
         maxLines: 1,
         obscureText: !_isPasswordVisible,
         keyboardType: TextInputType.visiblePassword,
@@ -191,7 +194,8 @@ class _LoginPageState extends State<LoginPage> {
           labelText: 'Password',
           labelStyle: GoogleFonts.inter(
             fontSize: 12.0,
-            color: Color.fromARGB(255, 255, 255, 255),
+            color: Colors.white, // Set label text color to white
+            fontWeight: FontWeight.bold, // Make label text bold
           ),
           border: InputBorder.none,
           contentPadding: EdgeInsets.zero,
