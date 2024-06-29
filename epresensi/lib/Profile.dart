@@ -2,6 +2,7 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 
 
@@ -10,7 +11,7 @@ class Profile extends StatelessWidget {
   Profile({required this.userData});
   @override
   Widget build(BuildContext context) {
-      print(userData);
+    String currentDate = DateFormat('yyyyMMdd').format(DateTime.now());
 
     return MaterialApp(
       title: 'Profile',
@@ -185,9 +186,9 @@ class Profile extends StatelessWidget {
                 ),
                 Positioned(
                   left: 166,
-                  top: 125,
+                  top: 120,
                   child: SizedBox(
-                    width: 137,
+                    width: 237,
                     height: 37,
                     child: Text(
                       userData['name'] ?? 'User',
@@ -236,7 +237,7 @@ class Profile extends StatelessWidget {
                             width: 120,
                             height: 18,
                             child: Text(
-                              'NIY Pegawai',
+                              'NIK Pegawai',
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: 12,
@@ -255,12 +256,12 @@ class Profile extends StatelessWidget {
                             width: 91,
                             height: 18,
                             child: Text(
-                              '00000000000',
+                              userData['nik'] ?? '00000000',
                               style: TextStyle(
                                 color: Colors.black,
-                                fontSize: 12,
+                                fontSize: 16,
                                 fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w400,
+                                fontWeight: FontWeight.w700,
                                 height: 0,
                                 letterSpacing: -0.33,
                               ),
@@ -305,7 +306,8 @@ class Profile extends StatelessWidget {
                             width: 91,
                             height: 18,
                             child: Text(
-                              'MM/DD/YEAR',
+                              userData['join_date'] ?? currentDate,
+
                               style: TextStyle(
                                 color: Colors.black,
                                 fontSize: 12,
@@ -450,7 +452,11 @@ class Profile extends StatelessWidget {
                               height: 46,
                               clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(),
-                              child: FlutterLogo(),
+                              child: Icon(
+                                Icons.calendar_today, // This sets the calendar icon
+                                size: 50.0,          // You can adjust the size
+                                color: Colors.white,  // You can change the color
+                              ),
                             ),
                           ),
                           Positioned(
@@ -524,7 +530,11 @@ class Profile extends StatelessWidget {
                             height: 46,
                             clipBehavior: Clip.antiAlias,
                             decoration: BoxDecoration(),
-                            child: FlutterLogo(),
+                            child: Icon(
+                              Icons.calendar_today, // This sets the calendar icon
+                              size: 50.0,          // You can adjust the size
+                              color: Colors.white,  // You can change the color
+                            ),
                           ),
                         ),
                         Positioned(
@@ -601,7 +611,11 @@ class Profile extends StatelessWidget {
                             height: 46,
                             clipBehavior: Clip.antiAlias,
                             decoration: BoxDecoration(),
-                            child: FlutterLogo(),
+                            child: Icon(
+                              Icons.calendar_today, // This sets the calendar icon
+                              size: 50.0,          // You can adjust the size
+                              color: Colors.white,  // You can change the color
+                            ),
                           ),
                         ),
                         Positioned(
@@ -677,7 +691,11 @@ class Profile extends StatelessWidget {
                             height: 46,
                             clipBehavior: Clip.antiAlias,
                             decoration: BoxDecoration(),
-                            child: FlutterLogo(),
+                            child: Icon(
+                              Icons.calendar_today, // This sets the calendar icon
+                              size: 50.0,          // You can adjust the size
+                              color: Colors.white,  // You can change the color
+                            ),
                           ),
                         ),
                         Positioned(
