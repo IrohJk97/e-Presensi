@@ -6,6 +6,8 @@ import 'package:epresensi/login.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'User.dart';
+
 class Home extends StatefulWidget {
   final String accessToken;
 
@@ -60,18 +62,18 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     print(_userData);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(""), // Set the title dynamically
-        automaticallyImplyLeading: false, // Hide the back button
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () {
-              _logout(context);
-            },
-          ),
-        ],
-      ),
+      // appBar: AppBar(
+      //   title: Text(""), // Set the title dynamically
+      //   automaticallyImplyLeading: false, // Hide the back button
+      //   actions: [
+      //     IconButton(
+      //       icon: Icon(Icons.logout),
+      //       onPressed: () {
+      //         _logout(context);
+      //       },
+      //     ),
+      //   ],
+      // ),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -84,8 +86,9 @@ class _HomeState extends State<Home> {
           Profile(userData: _userData),
           FormCuti(),
           Center(child: Text('Fingerprint Page')),
-          Center(child: Text('Profile Page')),
-          Center(child: Text('Phone Page')),
+          Center(child: Text('Izin')),
+          User(userData: _userData),
+
         ],
       ),
       bottomNavigationBar: CurvedNavigationBar(
@@ -113,40 +116,40 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Future<void> _logout(BuildContext context) async {
-     // Hapus session
+//   Future<void> _logout(BuildContext context) async {
+//      // Hapus session
 
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Confirm Logout'),
-            content: Text('Are you sure you want to logout?'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                },
-                child: Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  Navigator.of(context).pop(); // Close the dialog
-                  _logout(context);
-                  SharedPreferences prefs = await SharedPreferences.getInstance();
-                  await prefs.clear();
-                  // Navigasi ke halaman login
-                    Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                  );
-                },
-                child: Text('Logout'),
-              ),
-            ],
-          );
-        });
-// 
-  }
+//     showDialog(
+//         context: context,
+//         builder: (BuildContext context) {
+//           return AlertDialog(
+//             title: Text('Confirm Logout'),
+//             content: Text('Are you sure you want to logout?'),
+//             actions: [
+//               TextButton(
+//                 onPressed: () {
+//                   Navigator.of(context).pop(); // Close the dialog
+//                 },
+//                 child: Text('Cancel'),
+//               ),
+//               TextButton(
+//                 onPressed: () async {
+//                   Navigator.of(context).pop(); // Close the dialog
+//                   _logout(context);
+//                   SharedPreferences prefs = await SharedPreferences.getInstance();
+//                   await prefs.clear();
+//                   // Navigasi ke halaman login
+//                     Navigator.of(context).pushReplacement(
+//                     MaterialPageRoute(builder: (context) => LoginPage()),
+//                   );
+//                 },
+//                 child: Text('Logout'),
+//               ),
+//             ],
+//           );
+//         });
+// // 
+//   }
 }
 
 class UserProfileCard extends StatelessWidget {

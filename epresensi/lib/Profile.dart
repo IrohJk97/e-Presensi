@@ -16,6 +16,24 @@ class Profile extends StatelessWidget {
     return MaterialApp(
       title: 'Profile',
       home: Scaffold(
+        appBar: AppBar(
+          title: SizedBox(
+            width: 246,
+            height: 27,
+            child: Text(
+              getGreeting(),
+              style: TextStyle(
+                color: Color(0xFF666666),
+                fontSize: 16,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.w500,
+                height: 0,
+                letterSpacing: -0.33,
+              ),
+            ),
+          ),
+          // Other properties of the AppBar can be set here
+        ),
         body: SafeArea(
           child: Container(
             width: 430,
@@ -25,50 +43,29 @@ class Profile extends StatelessWidget {
             child: Stack(children: [
               // ... (keep the rest of the code the same)
                     
-                Positioned(
-                  left: 363,
-                  top: 85,
-                  child: Container(
-                    width: 34,
-                    height: 33,
-                    padding: const EdgeInsets.only(
-                      top: 2.75,
-                      left: 4.25,
-                      right: 4.25,
-                      bottom: 1.37,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [],
-                    ),
-                  ),
-                ),
+          
+                // Positioned(
+                //   left: 32,
+                //   top: 0,
+                //   child: SizedBox(
+                //     width: 246,
+                //     height: 27,
+                //     child: Text(
+                //       getGreeting(),
+                //       style: TextStyle(
+                //         color: Color(0xFF666666),
+                //         fontSize: 16,
+                //         fontFamily: 'Poppins',
+                //         fontWeight: FontWeight.w500,
+                //         height: 0,
+                //         letterSpacing: -0.33,
+                //       ),
+                //     ),
+                //   ),
+                // ),
                 Positioned(
                   left: 32,
                   top: 0,
-                  child: SizedBox(
-                    width: 246,
-                    height: 27,
-                    child: Text(
-                      getGreeting(),
-                      style: TextStyle(
-                        color: Color(0xFF666666),
-                        fontSize: 16,
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.w500,
-                        height: 0,
-                        letterSpacing: -0.33,
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  left: 32,
-                  top: 20,
                   child: SizedBox(
                     width: 198,
                     height: 21,
@@ -87,10 +84,10 @@ class Profile extends StatelessWidget {
                 ),
                 Positioned(
                   left: 32,
-                  top: 50,
+                  top: 30,
                   child: Container(
                     width: 370,
-                    height: 230,
+                    height: 250,
                     decoration: ShapeDecoration(
                       gradient: LinearGradient(
                         begin: Alignment(0.84, -0.54),

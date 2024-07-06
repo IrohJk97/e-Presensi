@@ -248,7 +248,6 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _signIn() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
-
     // Make sure both username and password are provided
     if (username.isEmpty || password.isEmpty) {
       showDialog(
