@@ -1,4 +1,4 @@
 class ApiUrls {
-  static const String baseUrl = 'https://bayusys.com/api';
-  static const String loginUrl = '$baseUrl/login';
+  static const String baseUrl = 'https://publicconcerns.online';
+  static const String loginUrl = '$baseUrl/api/check_login';
 }
