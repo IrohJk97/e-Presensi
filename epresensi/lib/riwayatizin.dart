@@ -5,34 +5,19 @@ class ApiUrls {
   static const String baseUrl = 'https://publicconcerns.online';
 }
 
-class Profile extends StatelessWidget {
+class RiwayatIzin extends StatelessWidget {
   final Map<String, dynamic> userData;
-  Profile({required this.userData});
+
+  const RiwayatIzin({Key? key, required this.userData}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    String currentDate = DateFormat('yyyyMMdd').format(DateTime.now());
+        String currentDate = DateFormat('yyyyMMdd').format(DateTime.now());
 
-    return MaterialApp(
+   return MaterialApp(
       title: 'Profile',
       home: Scaffold(
-        appBar: AppBar(
-          title: SizedBox(
-            width: 246,
-            height: 27,
-            child: Text(
-              getGreeting(),
-              style: TextStyle(
-                color: Color(0xFF666666),
-                fontSize: 16,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
-                height: 0,
-                letterSpacing: -0.33,
-              ),
-            ),
-          ),
-          // Other properties of the AppBar can be set here
-        ),
+      
         body: SafeArea(
           child: Container(
             width: 430,
@@ -43,25 +28,7 @@ class Profile extends StatelessWidget {
               // ... (keep the rest of the code the same)
 
         
-              Positioned(
-                left: 32,
-                top: 0,
-                child: SizedBox(
-                  width: 198,
-                  height: 21,
-                  child: Text(
-                    userData['name'] ?? 'User',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.bold,
-                      height: 0,
-                      letterSpacing: -0.33,
-                    ),
-                  ),
-                ),
-              ),
+             
               Positioned(
                 left: 32,
                 top: 30,
@@ -374,358 +341,26 @@ class Profile extends StatelessWidget {
                   height: 56,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage("https://via.placeholder.com/75x56"),
+                       image: NetworkImage(
+                                '${ApiUrls.baseUrl}/${userData['photo']}'),
+                       
                       fit: BoxFit.fill,
                     ),
                   ),
                 ),
               ),
+             
+             
+             
+             
               Positioned(
                 left: 32,
-                top: 405,
-                child: SizedBox(
-                  width: 246,
-                  height: 27,
-                  child: Text(
-                    'Riwayat Presensi',
-                    style: TextStyle(
-                      color: Color(0xFF666666),
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      height: 0,
-                      letterSpacing: -0.33,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                  left: 32,
-                  top: 300,
-                  child: Container(
-                      width: 174,
-                      height: 66,
-                      child: Stack(children: [
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          child: Container(
-                            width: 174,
-                            height: 66,
-                            decoration: ShapeDecoration(
-                              color: Color(0xFF50C0FF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 13,
-                          top: 9,
-                          child: Container(
-                            width: 44,
-                            height: 46,
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(),
-                            child: Icon(
-                              Icons
-                                  .calendar_today, // This sets the calendar icon
-                              size: 50.0, // You can adjust the size
-                              color: Colors.white, // You can change the color
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 66,
-                          top: 14,
-                          child: SizedBox(
-                            width: 86,
-                            height: 18,
-                            child: Text(
-                              'Izin',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 0,
-                                letterSpacing: -0.33,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 66,
-                          top: 35,
-                          child: SizedBox(
-                            width: 86,
-                            height: 18,
-                            child: Text(
-                              '3',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 0,
-                                letterSpacing: -0.33,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ]))),
-              Positioned(
-                left: 228,
                 top: 300,
-                child: Container(
-                  width: 174,
-                  height: 66,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          width: 174,
-                          height: 66,
-                          decoration: ShapeDecoration(
-                            color: Color(0xFF50C0FF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 13,
-                        top: 9,
-                        child: Container(
-                          width: 44,
-                          height: 46,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
-                          child: Icon(
-                            Icons.calendar_today, // This sets the calendar icon
-                            size: 50.0, // You can adjust the size
-                            color: Colors.white, // You can change the color
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 66,
-                        top: 14,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            'Cuti',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 66,
-                        top: 35,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            '3',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 32,
-                top: 380,
-                child: Container(
-                  width: 174,
-                  height: 66,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          width: 174,
-                          height: 66,
-                          decoration: ShapeDecoration(
-                            color: Color(0xFF50C0FF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 13,
-                        top: 9,
-                        child: Container(
-                          width: 44,
-                          height: 46,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
-                          child: Icon(
-                            Icons.calendar_today, // This sets the calendar icon
-                            size: 50.0, // You can adjust the size
-                            color: Colors.white, // You can change the color
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 66,
-                        top: 14,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            'Masuk',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 79,
-                        top: 35,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            '09 : 00 WIB',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 228,
-                top: 380,
-                child: Container(
-                  width: 174,
-                  height: 66,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          width: 174,
-                          height: 66,
-                          decoration: ShapeDecoration(
-                            color: Color(0xFF50C0FF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 13,
-                        top: 9,
-                        child: Container(
-                          width: 44,
-                          height: 46,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
-                          child: Icon(
-                            Icons.calendar_today, // This sets the calendar icon
-                            size: 50.0, // You can adjust the size
-                            color: Colors.white, // You can change the color
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 66,
-                        top: 14,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            'Keluar',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 81,
-                        top: 35,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            '16 : 00 WIB',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 32,
-                top: 465,
                 child: SizedBox(
                   width: 246,
                   height: 27,
                   child: Text(
-                    'Riwayat Presensi',
+                    'Riwayat Izin',
                     style: TextStyle(
                       color: Color(0xFF666666),
                       fontSize: 16,
@@ -739,7 +374,7 @@ class Profile extends StatelessWidget {
               ),
               Positioned(
                 left: 32,
-                top: 485,
+                top: 320,
                 child: Container(
                   width: 373,
                   height: 65,
@@ -816,7 +451,7 @@ class Profile extends StatelessWidget {
                           width: 102.57,
                           height: 21,
                           child: Text(
-                            'Cuti Tahunan',
+                            'Izin Sakit',
                             style: TextStyle(
                               color: Colors.black,
                               fontSize: 13,
@@ -885,6 +520,7 @@ class Profile extends StatelessWidget {
                   ),
                 ),
               ),
+              
             ]),
           ),
         ),
@@ -893,13 +529,34 @@ class Profile extends StatelessWidget {
   }
 }
 
-String getGreeting() {
-  var hour = DateTime.now().hour;
-  if (hour < 12) {
-    return 'Good Morning 👋';
-  } else if (hour < 17) {
-    return 'Good Afternoon 👋';
-  } else {
-    return 'Good Evening 👋';
+class LeaveHistoryItem extends StatelessWidget {
+  final String leaveType;
+  final String leaveDate;
+  final String leaveStatus;
+
+  LeaveHistoryItem({
+    required this.leaveType,
+    required this.leaveDate,
+    required this.leaveStatus,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              leaveType,
+              style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+            ),
+            Text(leaveDate),
+            Text(leaveStatus),
+          ],
+        ),
+      ),
+    );
   }
 }

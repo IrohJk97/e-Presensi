@@ -3,6 +3,7 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:epresensi/FormCuti.dart';
 import 'package:epresensi/Profile.dart';
 import 'package:epresensi/login.dart';
+import 'package:epresensi/formIzin.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -86,7 +87,7 @@ class _HomeState extends State<Home> {
           Profile(userData: _userData),
           FormCuti(),
           Center(child: Text('Fingerprint Page')),
-          Center(child: Text('Izin')),
+          FormIzin(userData: _userData),
           User(userData: _userData),
 
         ],

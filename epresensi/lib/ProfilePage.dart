@@ -27,9 +27,9 @@ class _ProfilePageState extends State<ProfilePage> {
     emailController = TextEditingController(text: widget.userData['email'] ?? '');
     phoneController = TextEditingController(text: widget.userData['phone_number'] ?? '');
     addressController = TextEditingController(text: widget.userData['alamat'] ?? '');
-    positionController = TextEditingController(
-  text: widget.userData['kode_jabatan'] != null ? widget.userData['kode_jabatan'].toString() : '',
-);
+    positionController = TextEditingController(text: widget.userData['jabatan_name'] ?? '');
+
+
   }
 
   @override
