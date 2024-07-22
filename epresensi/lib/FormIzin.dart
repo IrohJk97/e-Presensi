@@ -208,7 +208,7 @@ class _FormIzinState extends State<FormIzin> {
                             SizedBox(height: 16.0),
                             DropdownButtonFormField<String>(
                               decoration: InputDecoration(
-                                labelText: 'Jenis Cuti',
+                                labelText: 'Jenis Izin',
                                 border: OutlineInputBorder(),
                               ),
                               value: _selectedJenisCuti,

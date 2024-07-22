@@ -1,32 +1,41 @@
-import 'package:dropdown_button2/dropdown_button2.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:path/path.dart' as path;
+import 'package:mime/mime.dart';
 
 void main() {
-  runApp(const FormCuti());
+  runApp(FormCuti(userData: {'nik': '123456'})); // Pass userData here
 }
 
 class FormCuti extends StatelessWidget {
-  const FormCuti({super.key});
+  final Map<String, dynamic> userData;
+
+  const FormCuti({Key? key, required this.userData}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'DropdownButton2 Demo',
-      home: Cuti(),
+      title: 'Formulir Cuti',
+      home: Cuti(userData: userData), // Pass userData to Cuti
     );
   }
 }
 
 class Cuti extends StatefulWidget {
-  const Cuti({super.key});
+  final Map<String, dynamic> userData;
+
+  const Cuti({Key? key, required this.userData}) : super(key: key);
 
   @override
-  State<Cuti> createState() => _CutiPageState();
+  State<Cuti> createState() => _CutiState();
 }
 
-class _CutiPageState extends State<Cuti> {
+class _CutiState extends State<Cuti> {
+  final _formKey = GlobalKey<FormState>();
   final List<String> items = [
     'Jenis Cuti',
     'Cuti Tahunan',
@@ -37,43 +46,26 @@ class _CutiPageState extends State<Cuti> {
     'Cuti Kewafatan Keluarga',
     'Cuti Tugas Belajar',
   ];
-  String? selectedValue;
+  String? _selectedJenisCuti;
   DateTime? _selectedDate;
   DateTime? _returnDate;
-  XFile? profileAvatarCurrentImage;
+  XFile? _pickedFile;
 
-Future<void> _pickFile() async {
-  print("masuk sini");
-  // Request multiple permissions at once
-  Map<Permission, PermissionStatus> statuses = await [
-    Permission.storage,
-    Permission.camera,
-  ].request();
+  final TextEditingController _reasonController = TextEditingController();
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
 
-  // Check the permissions status
-  if (statuses[Permission.storage]?.isGranted == true &&
-      statuses[Permission.camera]?.isGranted == true) {
+  Future<void> _pickFile() async {
     final ImagePicker picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
-    if (file != null) {
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
       setState(() {
-        profileAvatarCurrentImage = file;
+        _pickedFile = pickedFile;
       });
     }
-  } else if (statuses[Permission.storage]?.isDenied == true ||
-      statuses[Permission.camera]?.isDenied == true) {
-    // Handle permission denied
-    // Optionally, show a dialog to request permission again
-  } else if (statuses[Permission.storage]?.isPermanentlyDenied == true ||
-      statuses[Permission.camera]?.isPermanentlyDenied == true) {
-    // Handle permanent denial, show a dialog to the user to open app settings
-    openAppSettings();
   }
-}
 
-
-  Future<void> _selectDate(BuildContext context, DateTime? initialDate,
-      Function(DateTime) onDatePicked) async {
+  Future<void> _selectDate(BuildContext context, DateTime? initialDate, Function(DateTime) onDatePicked) async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate ?? DateTime.now(),
@@ -85,282 +77,337 @@ Future<void> _pickFile() async {
     }
   }
 
+  Future<void> _submitForm() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      final apiUrl = 'https://publicconcerns.online/api/cuti/store';
+      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+      String formatDate(DateTime? date) {
+        if (date == null) return '';
+        return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      }
+
+      request.fields['nik'] = widget.userData['nik'] ?? ''; // Use userData
+      request.fields['tgl_izin_dari'] = formatDate(_selectedDate);
+      request.fields['tgl_izin_sampai'] = formatDate(_returnDate);
+      request.fields['kode_cuti'] = _selectedJenisCuti ?? '';
+      request.fields['keterangan'] = _reasonController.text;
+
+      if (_pickedFile != null) {
+        var file = http.MultipartFile(
+          'doc_sid',
+          File(_pickedFile!.path).readAsBytes().asStream(),
+          File(_pickedFile!.path).lengthSync(),
+          filename: path.basename(_pickedFile!.path),
+          contentType: MediaType.parse(lookupMimeType(_pickedFile!.path) ?? 'application/octet-stream'),
+        );
+        request.files.add(file);
+      }
+
+      try {
+        final response = await request.send();
+        final responseBody = await response.stream.bytesToString();
+
+        if (response.statusCode == 201) {
+          Fluttertoast.showToast(
+            msg: "Your leave application has been successfully uploaded. Please wait for admin to confirm it.",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.blue,
+            textColor: Colors.white,
+          );
+          _resetForm();
+        } else {
+          Fluttertoast.showToast(
+            msg: "There was an error submitting the form.",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        }
+      } catch (e) {
+        Fluttertoast.showToast(
+          msg: "An unexpected error occurred.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.CENTER,
+          backgroundColor: Colors.red,
+          textColor: Colors.white,
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmAndSubmitForm() async {
+    bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Konfirmasi'),
+          content: Text('Apakah Anda yakin ingin mengirim formulir ini?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Batal'),
+              onPressed: () {
+                Navigator.of(context).pop(false); // User pressed cancel
+              },
+            ),
+            TextButton(
+              child: Text('Kirim'),
+              onPressed: () {
+                Navigator.of(context).pop(true); // User pressed submit
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed ?? false) {
+      await _submitForm();
+    }
+  }
+
+  void _resetForm() {
+    setState(() {
+      _formKey.currentState?.reset();
+      _startDateController.clear();
+      _endDateController.clear();
+      _reasonController.clear();
+      _selectedDate = null;
+      _returnDate = null;
+      _pickedFile = null;
+      _selectedJenisCuti = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Formulir Pengajuan Cuti',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontFamily: 'Poppins',
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.33,
-            ),
+      appBar: AppBar(
+        title: Text(
+          'Formulir Pengajuan Cuti',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.33,
           ),
-          backgroundColor: Colors.white, // Optional: set app bar background color
-          elevation: 0, // Optional: remove app bar elevation
         ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Container(
-              //   width: 357,
-              //   height: 33,
-              //   child: Text(
-              //     'Formulir Pengajuan Cuti',
-              //     style: TextStyle(
-              //       color: Colors.black,
-              //       fontSize: 20,
-              //       fontFamily: 'Poppins',
-              //       fontWeight: FontWeight.w600,
-              //       height: 0,
-              //       letterSpacing: -0.33,
-              //     ),
-              //   ),
-              // ),
-              Text(
-                'Mohon untuk mengisi formulir yang telah disediakan, Terimakasih',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 11,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.w500,
-                  height: 0,
-                ),
-              ),
-              SizedBox(height: 16),
-              DropdownButtonHideUnderline(
-                child: DropdownButton2<String>(
-                  isExpanded: true,
-                  hint: Row(
-                    children: [
-                      Icon(
-                        Icons.list,
-                        size: 16,
-                        color: Colors.blue,
-                      ),
-                      SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          'Jenis Cuti',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                Text(
+                  'Mohon untuk mengisi formulir yang telah disediakan, Terimakasih',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 11,
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                    height: 0,
                   ),
-                  items: items
-                      .map((String item) => DropdownMenuItem<String>(
-                            value: item,
-                            child: Text(
-                              item,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ))
-                      .toList(),
-                  value: selectedValue,
+                ),
+                SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Jenis Cuti',
+                    border: OutlineInputBorder(),
+                  ),
+                  value: _selectedJenisCuti,
+                  items: items.map((String item) {
+                    return DropdownMenuItem<String>(
+                      value: item,
+                      child: Text(item),
+                    );
+                  }).toList(),
                   onChanged: (String? value) {
                     setState(() {
-                      selectedValue = value;
+                      _selectedJenisCuti = value;
                     });
                   },
-                  buttonStyleData: ButtonStyleData(
-                    height: 50,
-                    width: 400,
-                    padding: const EdgeInsets.only(left: 14, right: 14),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
+                  validator: (value) => value == null || value == 'Jenis Cuti'
+                      ? 'Jenis Cuti harus dipilih'
+                      : null,
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _startDateController,
+                  style: TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: 'Tanggal Pengajuan Cuti',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
                         color: Colors.blue,
+                        width: 1,
                       ),
-                      color: Colors.white,
                     ),
-                    elevation: 2,
-                  ),
-                  iconStyleData: IconStyleData(
-                    icon: Icon(Icons.arrow_forward_ios_outlined),
-                    iconSize: 14,
-                    iconEnabledColor: Colors.blue,
-                    iconDisabledColor: Colors.grey,
-                  ),
-                  dropdownStyleData: DropdownStyleData(
-                    maxHeight: 200,
-                    width: 400,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      color: Colors.white,
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: Colors.blue,
+                        width: 1,
+                      ),
                     ),
-                    offset: Offset(0, -10),
-                    scrollbarTheme: ScrollbarThemeData(
-                      radius: Radius.circular(40),
-                      thickness: MaterialStateProperty.all<double>(6),
-                      thumbVisibility: MaterialStateProperty.all<bool>(true),
-                    ),
-                  ),
-                  menuItemStyleData: MenuItemStyleData(
-                    height: 40,
-                    padding: EdgeInsets.only(left: 14, right: 14),
-                  ),
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                style: TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Tanggal Pengajuan Cuti',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Colors.blue,
-                      width: 1,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Colors.blue,
-                      width: 1,
-                    ),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      await _selectDate(context, _selectedDate, (pickedDate) {
-                        setState(() {
-                          _selectedDate = pickedDate;
+                    contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.calendar_today),
+                      onPressed: () async {
+                        await _selectDate(context, _selectedDate, (pickedDate) {
+                          setState(() {
+                            _selectedDate = pickedDate;
+                            _startDateController.text = '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
+                          });
                         });
-                      });
-                    },
-                  ),
-                ),
-                readOnly: true,
-                controller: TextEditingController(
-                  text: _selectedDate != null
-                      ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                      : '',
-                ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                style: TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  labelText: 'Tanggal Kembali Bekerja',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Colors.blue,
-                      width: 1,
+                      },
                     ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Colors.blue,
-                      width: 1,
+                  readOnly: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Tanggal Pengajuan Cuti harus diisi';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _endDateController,
+                  style: TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    labelText: 'Tanggal Kembali Bekerja',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: Colors.blue,
+                        width: 1,
+                      ),
                     ),
-                  ),
-                  contentPadding:
-                      EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  suffixIcon: IconButton(
-                    icon: Icon(Icons.calendar_today),
-                    onPressed: () async {
-                      await _selectDate(context, _returnDate, (pickedDate) {
-                        setState(() {
-                          _returnDate = pickedDate;
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: Colors.blue,
+                        width: 1,
+                      ),
+                    ),
+                    contentPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.calendar_today),
+                      onPressed: () async {
+                        await _selectDate(context, _returnDate, (pickedDate) {
+                          setState(() {
+                            _returnDate = pickedDate;
+                            _endDateController.text = '${pickedDate.day}/${pickedDate.month}/${pickedDate.year}';
+                          });
                         });
-                      });
-                    },
-                  ),
-                ),
-                readOnly: true,
-                controller: TextEditingController(
-                  text: _returnDate != null
-                      ? '${_returnDate!.day}/${_returnDate!.month}/${_returnDate!.year}'
-                      : '',
-                ),
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Keperluan',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide(
-                      color: Colors.blue,
-                      width: 1,
+                      },
                     ),
                   ),
+                  readOnly: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Tanggal Kembali Bekerja harus diisi';
+                    }
+                    return null;
+                  },
                 ),
-                maxLines: 5,
-              ),
-              SizedBox(height: 16),
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(14.0),
-                  child: GestureDetector(
-                    onTap: _pickFile,
-                    child: Container(
-                      width: 500,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.lightBlue[50], // Light blue background color
-                        border: Border.all(
-                          color: Colors.blue, // Blue border color
-                          width: 2.0,
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: _reasonController,
+                  decoration: InputDecoration(
+                    labelText: 'Keperluan',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: Colors.blue,
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  maxLines: 5,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Keperluan harus diisi';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14.0),
+                    child: GestureDetector(
+                      onTap: _pickFile,
+                      child: Container(
+                        width: double.infinity,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.lightBlue[50],
+                          border: Border.all(
+                            color: Colors.blue,
+                            width: 2.0,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        borderRadius: BorderRadius.circular(10), // Rounded corners
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.upload_rounded,
-                              color: Colors.blue,
-                              size: 50,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Lampirkan bukti cuti',
-                              style: TextStyle(
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.upload_rounded,
                                 color: Colors.blue,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                size: 50,
                               ),
-                            ),
-                            SizedBox(height: 8),
-                            profileAvatarCurrentImage != null
-                                ? Text(
-                                    'Selected File: ${profileAvatarCurrentImage!.name}',
-                                    style: TextStyle(
-                                      color: Colors.blue,
-                                      fontSize: 12,
-                                    ),
-                                  )
-                                : Container(),
-                          ],
+                              SizedBox(height: 8),
+                              Text(
+                                'Lampirkan bukti cuti',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              _pickedFile != null
+                                  ? Text(
+                                      'Selected File: ${path.basename(_pickedFile!.path)}',
+                                      style: TextStyle(
+                                        color: Colors.blue,
+                                        fontSize: 12,
+                                      ),
+                                    )
+                                  : Container(),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _confirmAndSubmitForm,
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.blue,
+                    minimumSize: Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text('Kirim Formulir'),
+                ),
+              ],
+            ),
           ),
         ),
       ),

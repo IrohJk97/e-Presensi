@@ -6,19 +6,67 @@ import 'package:http/http.dart' as http;
 
 class ApiUrls {
   static const String baseUrl = 'https://publicconcerns.online';
+  static const String leaveHistoryUrl = '/api/cuti/history';
 }
 
 class Profile extends StatelessWidget {
   final Map<String, dynamic> userData;
   Profile({required this.userData});
+  Future<List<Map<String, dynamic>>> _fetchLeaveHistory() async {
+    final response = await http.get(Uri.parse(
+        '${ApiUrls.baseUrl}${ApiUrls.leaveHistoryUrl}?nik=${userData['nik']}'));
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      try {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        // Check if the 'data' field is a list
+        final List<dynamic> data = responseData['data'];
+        if (data is List) {
+          return data.map((item) {
+            if (item is Map<String, dynamic>) {
+              return item;
+            } else {
+              throw Exception('Unexpected data format in list');
+            }
+          }).toList();
+        } else {
+          throw Exception('Response data does not contain a list under "data"');
+        }
+      } catch (e) {
+        print('Error parsing response body: $e');
+        throw Exception('Failed to parse leave history data');
+      }
+    } else {
+      throw Exception(
+          'Failed to load leave history, status code: ${response.statusCode}');
+    }
+  }
+
   Future<int> fetchIzinData() async {
-    final url = Uri.parse('${ApiUrls.baseUrl}/api/izin/history?nik=${userData['nik']}');
+    final url =
+        Uri.parse('${ApiUrls.baseUrl}/api/izin/history?nik=${userData['nik']}');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return int.tryParse(data['jumlah_izin'].toString()) ?? 0;
+    } else {
+      throw Exception('Failed to load izin data');
+    }
+  }
 
+  Future<int> fetchCutiData() async {
+    final url =
+        Uri.parse('${ApiUrls.baseUrl}/api/cuti/history?nik=${userData['nik']}');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return int.tryParse(data['jumlah_cuti'].toString()) ?? 0;
     } else {
       throw Exception('Failed to load izin data');
     }
@@ -58,7 +106,6 @@ class Profile extends StatelessWidget {
             child: Stack(children: [
               // ... (keep the rest of the code the same)
 
-        
               Positioned(
                 left: 32,
                 top: 0,
@@ -415,181 +462,198 @@ class Profile extends StatelessWidget {
                   ),
                 ),
               ),
-             Positioned(
-  left: 32,
-  top: 320,
-  child: Container(
-    width: 174,
-    height: 66,
-    child: FutureBuilder<int>(
-      future: fetchIzinData(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else {
-          final jumlahIzin = snapshot.data ?? 0; // Use the fetched data here
-          
-          return Stack(
-            children: [
               Positioned(
-                left: 0,
-                top: 0,
+                left: 32,
+                top: 320,
                 child: Container(
                   width: 174,
                   height: 66,
-                  decoration: ShapeDecoration(
-                    color: Color(0xFF50C0FF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  child: FutureBuilder<int>(
+                    future: fetchIzinData(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else {
+                        final jumlahIzin =
+                            snapshot.data ?? 0; // Use the fetched data here
+
+                        return Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              child: Container(
+                                width: 174,
+                                height: 66,
+                                decoration: ShapeDecoration(
+                                  color: Color(0xFF50C0FF),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 13,
+                              top: 9,
+                              child: Container(
+                                width: 44,
+                                height: 46,
+                                clipBehavior: Clip.antiAlias,
+                                decoration: BoxDecoration(),
+                                child: Icon(
+                                  Icons.calendar_today,
+                                  size: 50.0,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 66,
+                              top: 14,
+                              child: SizedBox(
+                                width: 86,
+                                height: 18,
+                                child: Text(
+                                  'Izin',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w600,
+                                    height: 0,
+                                    letterSpacing: -0.33,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              left: 66,
+                              top: 35,
+                              child: SizedBox(
+                                width: 86,
+                                height: 18,
+                                child: Text(
+                                  '$jumlahIzin',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w600,
+                                    height: 0,
+                                    letterSpacing: -0.33,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
                   ),
                 ),
               ),
-              Positioned(
-                left: 13,
-                top: 9,
-                child: Container(
-                  width: 44,
-                  height: 46,
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(),
-                  child: Icon(
-                    Icons.calendar_today,
-                    size: 50.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 66,
-                top: 14,
-                child: SizedBox(
-                  width: 86,
-                  height: 18,
-                  child: Text(
-                    'Izin',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                      height: 0,
-                      letterSpacing: -0.33,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 66,
-                top: 35,
-                child: SizedBox(
-                  width: 86,
-                  height: 18,
-                  child: Text(
-                    '$jumlahIzin',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w600,
-                      height: 0,
-                      letterSpacing: -0.33,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }
-      },
-    ),
-  ),
-),
               Positioned(
                 left: 228,
                 top: 320,
                 child: Container(
                   width: 174,
                   height: 66,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          width: 174,
-                          height: 66,
-                          decoration: ShapeDecoration(
-                            color: Color(0xFF50C0FF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                  child: FutureBuilder<int>(
+                    future:
+                        fetchCutiData(), // Call your method to fetch cuti data
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else {
+                        final jumlahCuti =
+                            snapshot.data ?? 0; // Use the fetched data here
+
+                        return Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              child: Container(
+                                width: 174,
+                                height: 66,
+                                decoration: ShapeDecoration(
+                                  color: Color(0xFF50C0FF),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 13,
-                        top: 9,
-                        child: Container(
-                          width: 44,
-                          height: 46,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
-                          child: Icon(
-                            Icons.calendar_today, // This sets the calendar icon
-                            size: 50.0, // You can adjust the size
-                            color: Colors.white, // You can change the color
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 66,
-                        top: 14,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            'Cuti',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
+                            Positioned(
+                              left: 13,
+                              top: 9,
+                              child: Container(
+                                width: 44,
+                                height: 46,
+                                clipBehavior: Clip.antiAlias,
+                                decoration: BoxDecoration(),
+                                child: Icon(
+                                  Icons.calendar_today,
+                                  size: 50.0,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 66,
-                        top: 35,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            '3',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
+                            Positioned(
+                              left: 66,
+                              top: 14,
+                              child: SizedBox(
+                                width: 86,
+                                height: 18,
+                                child: Text(
+                                  'Cuti',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w600,
+                                    height: 0,
+                                    letterSpacing: -0.33,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
+                            Positioned(
+                              left: 66,
+                              top: 35,
+                              child: SizedBox(
+                                width: 86,
+                                height: 18,
+                                child: Text(
+                                  '$jumlahCuti',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w600,
+                                    height: 0,
+                                    letterSpacing: -0.33,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
                   ),
                 ),
               ),
+
               Positioned(
                 left: 32,
                 top: 390,
@@ -752,168 +816,143 @@ class Profile extends StatelessWidget {
               ),
               Positioned(
                 left: 32,
-                top: 465,
+                top: 470,
                 child: SizedBox(
                   width: 246,
                   height: 27,
                   child: Text(
-                    'Riwayat Cuti',
+                    'Riwayat Izin',
                     style: TextStyle(
                       color: Color(0xFF666666),
                       fontSize: 16,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w500,
-                      height: 0,
                       letterSpacing: -0.33,
                     ),
                   ),
                 ),
               ),
               Positioned(
-                left: 32,
-                top: 485,
-                child: Container(
-                  width: 373,
-                  height: 65,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          width: 373,
-                          height: 65,
-                          decoration: ShapeDecoration(
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            shadows: [
-                              BoxShadow(
-                                color: Color(0x3F000000),
-                                blurRadius: 4,
-                                offset: Offset(0, 4),
-                                spreadRadius: 0,
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 13.47,
-                        top: 13,
-                        child: Container(
-                          width: 43.52,
-                          height: 43,
-                          child: Stack(
-                            children: [
-                              Positioned(
-                                left: 0,
-                                top: 0,
-                                child: Container(
-                                  width: 43.52,
-                                  height: 43,
-                                  decoration: ShapeDecoration(
-                                    color: Color(0x49716ACA),
-                                    shape: OvalBorder(
-                                      side: BorderSide(
-                                          width: 1, color: Color(0x00716ACA)),
+                top: 480,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FutureBuilder<List<Map<String, dynamic>>>(
+                    future: _fetchLeaveHistory(), // Fetch leave history
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(child: Text('No leave history found.'));
+                      } else {
+                        final leaveHistory = snapshot.data!;
+                        return ListView.builder(
+                          itemCount: leaveHistory.length,
+                          itemBuilder: (context, index) {
+                            final leave = leaveHistory[index];
+                            Color badgeColor;
+                            String badgeText;
+                            IconData badgeIcon;
+
+                            switch (leave['status']) {
+                              case 'Progress':
+                                badgeColor = Colors.orange;
+                                badgeText = 'In Progress';
+                                badgeIcon = Icons.hourglass_empty;
+                                break;
+                              case 'Reject':
+                                badgeColor = Colors.red;
+                                badgeText = 'Rejected';
+                                badgeIcon = Icons.cancel;
+                                break;
+                              case 'Approved':
+                                badgeColor = Colors.green;
+                                badgeText = 'Approved';
+                                badgeIcon = Icons.check_circle;
+                                break;
+                              default:
+                                badgeColor = Colors.grey;
+                                badgeText = 'Unknown';
+                                badgeIcon = Icons.help;
+                            }
+
+                            return Card(
+                              elevation: 2,
+                              margin: EdgeInsets.symmetric(
+                                  vertical: 8, horizontal: 16),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: Colors.transparent,
+                                          backgroundImage:NetworkImage(
+                                '${ApiUrls.baseUrl}/${userData['photo']}' ??
+                                              'https://via.placeholder.com/41x39'),
+                                          onBackgroundImageError:
+                                              (exception, stackTrace) {
+                                            print(
+                                                'Image Error: $exception\n$stackTrace');
+                                          },
+                                        ),
+                                        SizedBox(width: 16),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              leave['kode_cuti'] ?? 'Unknown',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            SizedBox(height: 8),
+                                            Text(
+                                                'Date: ${leave['tgl_izin_dari'] ?? 'Unknown'}'),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                  ),
+                                    Container(
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: badgeColor,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(badgeIcon,
+                                              size: 12, color: Colors.white),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            badgeText,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Positioned(
-                                left: 1.53,
-                                top: 3.02,
-                                child: Container(
-                                  width: 41.23,
-                                  height: 39.23,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      image: NetworkImage(
-                                          "https://via.placeholder.com/41x39"),
-                                      fit: BoxFit.fill,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 63.20,
-                        top: 14,
-                        child: SizedBox(
-                          width: 102.57,
-                          height: 21,
-                          child: Text(
-                            'Cuti Tahunan',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 13,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 63.20,
-                        top: 33,
-                        child: SizedBox(
-                          width: 102.57,
-                          height: 19,
-                          child: Text(
-                            '07 September 2023',
-                            style: TextStyle(
-                              color: Color(0xFF666666),
-                              fontSize: 10,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 290,
-                        top: 24,
-                        child: Container(
-                          width: 60,
-                          height: 17,
-                          decoration: ShapeDecoration(
-                            color: Color(0xFFFF0101),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 299,
-                        top: 27,
-                        child: SizedBox(
-                          width: 42,
-                          height: 11,
-                          child: Text(
-                            'Menunggu',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 7,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                            );
+                          },
+                        );
+                      }
+                    },
                   ),
                 ),
               ),

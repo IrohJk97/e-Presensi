@@ -85,7 +85,7 @@ class _HomeState extends State<Home> {
         children: <Widget>[
           
           Profile(userData: _userData),
-          FormCuti(),
+          FormCuti(userData: _userData),
           Center(child: Text('Fingerprint Page')),
           FormIzin(userData: _userData),
           User(userData: _userData),

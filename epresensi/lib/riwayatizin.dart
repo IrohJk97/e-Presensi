@@ -23,11 +23,29 @@ class RiwayatIzin extends StatelessWidget {
     print('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      return data.map((item) => item as Map<String, dynamic>).toList();
-    } else {
-      throw Exception('Failed to load leave history');
+    try {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      // Check if the 'data' field is a list
+      final List<dynamic> data = responseData['data'];
+      if (data is List) {
+        return data.map((item) {
+          if (item is Map<String, dynamic>) {
+            return item;
+          } else {
+            throw Exception('Unexpected data format in list');
+          }
+        }).toList();
+      } else {
+        throw Exception('Response data does not contain a list under "data"');
+      }
+    } catch (e) {
+      print('Error parsing response body: $e');
+      throw Exception('Failed to parse leave history data');
     }
+  } else {
+    throw Exception('Failed to load leave history, status code: ${response.statusCode}');
+  }
   }
 
   @override
