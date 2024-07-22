@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:epresensi/home.dart';
 import 'package:epresensi/riwayatizin.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -42,71 +43,100 @@ class _FormIzinState extends State<FormIzin> {
       });
     }
   }
-Future<void> _submitForm() async {
-  // Your API URL
-  final apiUrl = 'https://publicconcerns.online/api/izin/store';
 
-  // Prepare request
-  var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+  Future<void> _submitForm() async {
+    // Your API URL
+    final apiUrl = 'https://publicconcerns.online/api/izin/store';
 
-  String formatDate(DateTime? date) {
-    if (date == null) return '';
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
+    // Prepare request
+    var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
-  request.fields['nik'] = widget.userData['nik'] ?? '';
-  request.fields['tgl_izin_dari'] = formatDate(_selectedDate); // Convert to 'YYYY-MM-DD'
-  request.fields['tgl_izin_sampai'] = formatDate(_selectedReturnDate); // Convert to 'YYYY-MM-DD'
-  request.fields['kode_izin'] = _selectedJenisCuti ?? '';
-  request.fields['keterangan'] = _keperluan ?? '';
+    String formatDate(DateTime? date) {
+      if (date == null) return '';
+      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    }
 
-  if (_pickedFile != null) {
-    var file = http.MultipartFile(
-      'doc_sid',
-      File(_pickedFile!.path!).readAsBytes().asStream(),
-      File(_pickedFile!.path!).lengthSync(),
-      filename: _pickedFile!.name,
-      contentType: MediaType.parse(lookupMimeType(_pickedFile!.path!) ?? 'application/octet-stream'),
-    );
-    request.files.add(file);
-  }
+    request.fields['nik'] = widget.userData['nik'] ?? '';
+    request.fields['tgl_izin_dari'] =
+        formatDate(_selectedDate); // Convert to 'YYYY-MM-DD'
+    request.fields['tgl_izin_sampai'] =
+        formatDate(_selectedReturnDate); // Convert to 'YYYY-MM-DD'
+    request.fields['kode_izin'] = _selectedJenisCuti ?? '';
+    request.fields['keterangan'] = _keperluan ?? '';
 
-  // Send request
-  try {
-    final response = await request.send();
-    final responseBody = await response.stream.bytesToString();
+    if (_pickedFile != null) {
+      var file = http.MultipartFile(
+        'doc_sid',
+        File(_pickedFile!.path!).readAsBytes().asStream(),
+        File(_pickedFile!.path!).lengthSync(),
+        filename: _pickedFile!.name,
+        contentType: MediaType.parse(
+            lookupMimeType(_pickedFile!.path!) ?? 'application/octet-stream'),
+      );
+      request.files.add(file);
+    }
 
-    print('Response status: ${response.statusCode}');
-    print('Response body: $responseBody');
+    // Send request
+    try {
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
 
-    if (response.statusCode == 201) {
-      // Handle successful response
-      Alert(
-        context: context,
-        type: AlertType.success,
-        title: "Success",
-        desc: "Form submitted successfully!",
-        buttons: [
-          DialogButton(
-            child: Text(
-              "OK",
-              style: TextStyle(color: Colors.white, fontSize: 20),
-            ),
-            onPressed: () {
-              Navigator.pop(context); // Close the alert dialog
-              _resetForm(); // Reset the form fields
-            },
-            color: Colors.blue,
-          )
-        ],
-      ).show();
-    } else {
-      // Handle error response
+      print('Response status: ${response.statusCode}');
+      print('Response body: $responseBody');
+
+      if (response.statusCode == 201) {
+        // Handle successful response
+        Alert(
+          context: context,
+          type: AlertType.success,
+          title: "Congratulations!",
+          desc:
+              "Your leave application has been successfully uploaded. Please wait for admin to confirm it.",
+          buttons: [
+            DialogButton(
+              child: Text(
+                "Back To Dashboard",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              onPressed: () {
+                Navigator.pop(context); // Close the alert dialog
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                      builder: (context) => Home(
+                            accessToken: '',
+                          )),
+                ); // Navigate to home screen
+              },
+              color: Colors.blue,
+            )
+          ],
+        ).show();
+      } else {
+        // Handle error response
+        Alert(
+          context: context,
+          type: AlertType.error,
+          title: "Error",
+          desc: "There was an error submitting the form.",
+          buttons: [
+            DialogButton(
+              child: Text(
+                "OK",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              onPressed: () => Navigator.pop(context),
+              color: Colors.red,
+            )
+          ],
+        ).show();
+      }
+    } catch (e) {
+      print('Error: $e');
       Alert(
         context: context,
         type: AlertType.error,
         title: "Error",
-        desc: "There was an error submitting the form.",
+        desc: "An unexpected error occurred.",
         buttons: [
           DialogButton(
             child: Text(
@@ -119,40 +149,20 @@ Future<void> _submitForm() async {
         ],
       ).show();
     }
-  } catch (e) {
-    print('Error: $e');
-    Alert(
-      context: context,
-      type: AlertType.error,
-      title: "Error",
-      desc: "An unexpected error occurred.",
-      buttons: [
-        DialogButton(
-          child: Text(
-            "OK",
-            style: TextStyle(color: Colors.white, fontSize: 20),
-          ),
-          onPressed: () => Navigator.pop(context),
-          color: Colors.red,
-        )
-      ],
-    ).show();
   }
-}
 
-void _resetForm() {
-  setState(() {
-    _formKey.currentState?.reset(); // Reset form fields
-    _controller.clear(); // Clear date fields
-    _returnController.clear();
-    _selectedDate = null;
-    _selectedReturnDate = null;
-    _pickedFile = null; // Clear file selection
-    _selectedJenisCuti = null;
-    _keperluan = null;
-  });
-}
-
+  void _resetForm() {
+    setState(() {
+      _formKey.currentState?.reset(); // Reset form fields
+      _controller.clear(); // Clear date fields
+      _returnController.clear();
+      _selectedDate = null;
+      _selectedReturnDate = null;
+      _pickedFile = null; // Clear file selection
+      _selectedJenisCuti = null;
+      _keperluan = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +227,9 @@ void _resetForm() {
                                   _selectedJenisCuti = value;
                                 });
                               },
-                              validator: (value) => value == null ? 'Please select a cuti type' : null,
+                              validator: (value) => value == null
+                                  ? 'Please select a cuti type'
+                                  : null,
                             ),
                             SizedBox(height: 16.0),
                             TextFormField(
@@ -228,22 +240,29 @@ void _resetForm() {
                                 suffixIcon: IconButton(
                                   icon: Icon(Icons.calendar_today),
                                   onPressed: () async {
-                                    final DateTime? picked = await showDatePicker(
+                                    final DateTime? picked =
+                                        await showDatePicker(
                                       context: context,
-                                      initialDate: _selectedDate ?? DateTime.now(),
+                                      initialDate:
+                                          _selectedDate ?? DateTime.now(),
                                       firstDate: DateTime(2015),
                                       lastDate: DateTime(2101),
                                     );
-                                    if (picked != null && picked != _selectedDate) {
+                                    if (picked != null &&
+                                        picked != _selectedDate) {
                                       setState(() {
                                         _selectedDate = picked;
-                                        _controller.text = '${_selectedDate?.day}/${_selectedDate?.month}/${_selectedDate?.year}';
+                                        _controller.text =
+                                            '${_selectedDate?.day}/${_selectedDate?.month}/${_selectedDate?.year}';
                                       });
                                     }
                                   },
                                 ),
                               ),
-                              validator: (value) => value == null || value.isEmpty ? 'Please select a date' : null,
+                              validator: (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'Please select a date'
+                                      : null,
                             ),
                             SizedBox(height: 16.0),
                             TextFormField(
@@ -254,22 +273,29 @@ void _resetForm() {
                                 suffixIcon: IconButton(
                                   icon: Icon(Icons.calendar_today),
                                   onPressed: () async {
-                                    final DateTime? picked = await showDatePicker(
+                                    final DateTime? picked =
+                                        await showDatePicker(
                                       context: context,
-                                      initialDate: _selectedReturnDate ?? DateTime.now(),
+                                      initialDate:
+                                          _selectedReturnDate ?? DateTime.now(),
                                       firstDate: DateTime(2015),
                                       lastDate: DateTime(2101),
                                     );
-                                    if (picked != null && picked != _selectedReturnDate) {
+                                    if (picked != null &&
+                                        picked != _selectedReturnDate) {
                                       setState(() {
                                         _selectedReturnDate = picked;
-                                        _returnController.text = '${_selectedReturnDate?.day}/${_selectedReturnDate?.month}/${_selectedReturnDate?.year}';
+                                        _returnController.text =
+                                            '${_selectedReturnDate?.day}/${_selectedReturnDate?.month}/${_selectedReturnDate?.year}';
                                       });
                                     }
                                   },
                                 ),
                               ),
-                              validator: (value) => value == null || value.isEmpty ? 'Please select a return date' : null,
+                              validator: (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'Please select a return date'
+                                      : null,
                             ),
                             SizedBox(height: 16.0),
                             TextFormField(
@@ -281,7 +307,10 @@ void _resetForm() {
                               onChanged: (value) {
                                 _keperluan = value;
                               },
-                              validator: (value) => value == null || value.isEmpty ? 'Please enter the purpose' : null,
+                              validator: (value) =>
+                                  value == null || value.isEmpty
+                                      ? 'Please enter the purpose'
+                                      : null,
                             ),
                             SizedBox(height: 32.0),
                             Container(
@@ -294,11 +323,15 @@ void _resetForm() {
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.cloud_upload, size: 50, color: Colors.blue),
+                                    Icon(Icons.cloud_upload,
+                                        size: 50, color: Colors.blue),
                                     SizedBox(height: 10),
                                     Text(
-                                      _pickedFile != null ? _pickedFile!.name : 'Drag & Drop your file here',
-                                      style: TextStyle(fontSize: 16, color: Colors.blue),
+                                      _pickedFile != null
+                                          ? _pickedFile!.name
+                                          : 'Drag & Drop your file here',
+                                      style: TextStyle(
+                                          fontSize: 16, color: Colors.blue),
                                     ),
                                     Text('or', style: TextStyle(fontSize: 16)),
                                     TextButton(
@@ -313,31 +346,40 @@ void _resetForm() {
                             Center(
                               child: ElevatedButton(
                                 style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.white, backgroundColor: Colors.blue, // Text color
+                                  foregroundColor: Colors.white,
+                                  backgroundColor: Colors.blue, // Text color
                                 ),
                                 onPressed: () {
-                                  if (_formKey.currentState?.validate() ?? false) {
+                                  if (_formKey.currentState?.validate() ??
+                                      false) {
                                     Alert(
                                       context: context,
                                       type: AlertType.info,
                                       title: "Confirm Submission",
-                                      desc: "Are you sure you want to submit the form?",
+                                      desc:
+                                          "Are you sure you want to submit the form?",
                                       buttons: [
                                         DialogButton(
                                           child: Text(
                                             "Cancel",
-                                            style: TextStyle(color: Colors.white, fontSize: 20),
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 20),
                                           ),
-                                          onPressed: () => Navigator.pop(context),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
                                           color: Colors.red,
                                         ),
                                         DialogButton(
                                           child: Text(
                                             "Submit",
-                                            style: TextStyle(color: Colors.white, fontSize: 20),
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 20),
                                           ),
                                           onPressed: () async {
-                                            Navigator.pop(context); // Close the dialog
+                                            Navigator.pop(
+                                                context); // Close the dialog
                                             await _submitForm(); // Call the API function
                                           },
                                           color: Colors.blue,

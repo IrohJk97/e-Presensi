@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 class ApiUrls {
   static const String baseUrl = 'https://publicconcerns.online';
@@ -8,6 +11,19 @@ class ApiUrls {
 class Profile extends StatelessWidget {
   final Map<String, dynamic> userData;
   Profile({required this.userData});
+  Future<int> fetchIzinData() async {
+    final url = Uri.parse('${ApiUrls.baseUrl}/api/izin/history?nik=${userData['nik']}');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return int.tryParse(data['jumlah_izin'].toString()) ?? 0;
+
+    } else {
+      throw Exception('Failed to load izin data');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String currentDate = DateFormat('yyyyMMdd').format(DateTime.now());
@@ -382,7 +398,7 @@ class Profile extends StatelessWidget {
               ),
               Positioned(
                 left: 32,
-                top: 405,
+                top: 300,
                 child: SizedBox(
                   width: 246,
                   height: 27,
@@ -399,87 +415,103 @@ class Profile extends StatelessWidget {
                   ),
                 ),
               ),
+             Positioned(
+  left: 32,
+  top: 320,
+  child: Container(
+    width: 174,
+    height: 66,
+    child: FutureBuilder<int>(
+      future: fetchIzinData(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else {
+          final jumlahIzin = snapshot.data ?? 0; // Use the fetched data here
+          
+          return Stack(
+            children: [
               Positioned(
-                  left: 32,
-                  top: 300,
-                  child: Container(
-                      width: 174,
-                      height: 66,
-                      child: Stack(children: [
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          child: Container(
-                            width: 174,
-                            height: 66,
-                            decoration: ShapeDecoration(
-                              color: Color(0xFF50C0FF),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 13,
-                          top: 9,
-                          child: Container(
-                            width: 44,
-                            height: 46,
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(),
-                            child: Icon(
-                              Icons
-                                  .calendar_today, // This sets the calendar icon
-                              size: 50.0, // You can adjust the size
-                              color: Colors.white, // You can change the color
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 66,
-                          top: 14,
-                          child: SizedBox(
-                            width: 86,
-                            height: 18,
-                            child: Text(
-                              'Izin',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 0,
-                                letterSpacing: -0.33,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 66,
-                          top: 35,
-                          child: SizedBox(
-                            width: 86,
-                            height: 18,
-                            child: Text(
-                              '3',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontFamily: 'Poppins',
-                                fontWeight: FontWeight.w600,
-                                height: 0,
-                                letterSpacing: -0.33,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ]))),
+                left: 0,
+                top: 0,
+                child: Container(
+                  width: 174,
+                  height: 66,
+                  decoration: ShapeDecoration(
+                    color: Color(0xFF50C0FF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 13,
+                top: 9,
+                child: Container(
+                  width: 44,
+                  height: 46,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(),
+                  child: Icon(
+                    Icons.calendar_today,
+                    size: 50.0,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 66,
+                top: 14,
+                child: SizedBox(
+                  width: 86,
+                  height: 18,
+                  child: Text(
+                    'Izin',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      height: 0,
+                      letterSpacing: -0.33,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 66,
+                top: 35,
+                child: SizedBox(
+                  width: 86,
+                  height: 18,
+                  child: Text(
+                    '$jumlahIzin',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      height: 0,
+                      letterSpacing: -0.33,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+      },
+    ),
+  ),
+),
               Positioned(
                 left: 228,
-                top: 300,
+                top: 320,
                 child: Container(
                   width: 174,
                   height: 66,
@@ -560,7 +592,7 @@ class Profile extends StatelessWidget {
               ),
               Positioned(
                 left: 32,
-                top: 380,
+                top: 390,
                 child: Container(
                   width: 174,
                   height: 66,
@@ -640,7 +672,7 @@ class Profile extends StatelessWidget {
               ),
               Positioned(
                 left: 228,
-                top: 380,
+                top: 390,
                 child: Container(
                   width: 174,
                   height: 66,
@@ -725,7 +757,7 @@ class Profile extends StatelessWidget {
                   width: 246,
                   height: 27,
                   child: Text(
-                    'Riwayat Presensi',
+                    'Riwayat Cuti',
                     style: TextStyle(
                       color: Color(0xFF666666),
                       fontSize: 16,
