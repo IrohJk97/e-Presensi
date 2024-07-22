@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:rflutter_alert/rflutter_alert.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 
 class FormIzin extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -40,25 +42,44 @@ class _FormIzinState extends State<FormIzin> {
       });
     }
   }
+Future<void> _submitForm() async {
+  // Your API URL
+  final apiUrl = 'https://publicconcerns.online/api/izin/store';
 
-  Future<void> _submitForm() async {
-    // Your API URL
-    final apiUrl = 'https://publicconcerns.online/api/users/pengajuan_izin';
-    
-    // Make the API request
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'date': _controller.text,
-        'returnDate': _returnController.text,
-        'file': _pickedFile?.name, // Handle file data as needed
-        'jenisCuti': _selectedJenisCuti,
-        'keperluan': _keperluan,
-      }),
+  // Prepare request
+  var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+  String formatDate(DateTime? date) {
+    if (date == null) return '';
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  request.fields['nik'] = widget.userData['nik'] ?? '';
+  request.fields['tgl_izin_dari'] = formatDate(_selectedDate); // Convert to 'YYYY-MM-DD'
+  request.fields['tgl_izin_sampai'] = formatDate(_selectedReturnDate); // Convert to 'YYYY-MM-DD'
+  request.fields['kode_izin'] = _selectedJenisCuti ?? '';
+  request.fields['keterangan'] = _keperluan ?? '';
+
+  if (_pickedFile != null) {
+    var file = http.MultipartFile(
+      'doc_sid',
+      File(_pickedFile!.path!).readAsBytes().asStream(),
+      File(_pickedFile!.path!).lengthSync(),
+      filename: _pickedFile!.name,
+      contentType: MediaType.parse(lookupMimeType(_pickedFile!.path!) ?? 'application/octet-stream'),
     );
+    request.files.add(file);
+  }
 
-    if (response.statusCode == 200) {
+  // Send request
+  try {
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: $responseBody');
+
+    if (response.statusCode == 201) {
       // Handle successful response
       Alert(
         context: context,
@@ -71,7 +92,10 @@ class _FormIzinState extends State<FormIzin> {
               "OK",
               style: TextStyle(color: Colors.white, fontSize: 20),
             ),
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context); // Close the alert dialog
+              _resetForm(); // Reset the form fields
+            },
             color: Colors.blue,
           )
         ],
@@ -95,7 +119,40 @@ class _FormIzinState extends State<FormIzin> {
         ],
       ).show();
     }
+  } catch (e) {
+    print('Error: $e');
+    Alert(
+      context: context,
+      type: AlertType.error,
+      title: "Error",
+      desc: "An unexpected error occurred.",
+      buttons: [
+        DialogButton(
+          child: Text(
+            "OK",
+            style: TextStyle(color: Colors.white, fontSize: 20),
+          ),
+          onPressed: () => Navigator.pop(context),
+          color: Colors.red,
+        )
+      ],
+    ).show();
   }
+}
+
+void _resetForm() {
+  setState(() {
+    _formKey.currentState?.reset(); // Reset form fields
+    _controller.clear(); // Clear date fields
+    _returnController.clear();
+    _selectedDate = null;
+    _selectedReturnDate = null;
+    _pickedFile = null; // Clear file selection
+    _selectedJenisCuti = null;
+    _keperluan = null;
+  });
+}
+
 
   @override
   Widget build(BuildContext context) {

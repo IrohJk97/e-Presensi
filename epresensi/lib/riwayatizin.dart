@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 
 class ApiUrls {
   static const String baseUrl = 'https://publicconcerns.online';
+  static const String leaveHistoryUrl = '/api/izin/history'; // Update with your actual endpoint
 }
 
 class RiwayatIzin extends StatelessWidget {
@@ -10,46 +14,52 @@ class RiwayatIzin extends StatelessWidget {
 
   const RiwayatIzin({Key? key, required this.userData}) : super(key: key);
 
+  Future<List<Map<String, dynamic>>> _fetchLeaveHistory() async {
+    final response = await http.get(Uri.parse(
+        '${ApiUrls.baseUrl}${ApiUrls.leaveHistoryUrl}?nik=${userData['nik']}'));
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data.map((item) => item as Map<String, dynamic>).toList();
+    } else {
+      throw Exception('Failed to load leave history');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-        String currentDate = DateFormat('yyyyMMdd').format(DateTime.now());
+    String currentDate = DateFormat('yyyyMMdd').format(DateTime.now());
 
-   return MaterialApp(
-      title: 'Profile',
-      home: Scaffold(
-      
-        body: SafeArea(
-          child: Container(
-            width: 430,
-            height: 932,
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(color: Colors.white),
-            child: Stack(children: [
-              // ... (keep the rest of the code the same)
-
-        
-             
+    return Scaffold(
+    
+      body: SafeArea(
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(color: Colors.white),
+          child: Stack(
+            children: [
               Positioned(
                 left: 32,
                 top: 30,
                 child: Container(
                   width: 370,
                   height: 250,
-                  decoration: ShapeDecoration(
+                  decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment(0.84, -0.54),
                       end: Alignment(-0.84, 0.54),
                       colors: [Color(0xFF00A3FF), Color(0x00716ACA)],
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    shadows: [
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
                       BoxShadow(
                         color: Color(0x3F000000),
                         blurRadius: 4,
                         offset: Offset(0, 4),
-                        spreadRadius: 0,
                       )
                     ],
                   ),
@@ -93,8 +103,7 @@ class RiwayatIzin extends StatelessWidget {
                           decoration: ShapeDecoration(
                             color: Color(0x3D00A3FF),
                             shape: CircleBorder(
-                              side: BorderSide(
-                                  width: 1, color: Color(0x00716ACA)),
+                              side: BorderSide(width: 1, color: Color(0x00716ACA)),
                             ),
                           ),
                         ),
@@ -112,16 +121,10 @@ class RiwayatIzin extends StatelessWidget {
                           child: CircleAvatar(
                             radius: 30,
                             backgroundColor: Colors.transparent,
-                            backgroundImage: NetworkImage(
-                                '${ApiUrls.baseUrl}/${userData['photo']}'),
+                            backgroundImage: NetworkImage('${ApiUrls.baseUrl}/${userData['photo']}'),
                             onBackgroundImageError: (exception, stackTrace) {
                               print('Image Error: $exception\n$stackTrace');
                             },
-                            // child: Icon(
-                            //   Icons.person,
-                            //   size: 40,
-                            //   color: Colors.grey[300],
-                            // ),
                           ),
                         ),
                       ),
@@ -142,7 +145,6 @@ class RiwayatIzin extends StatelessWidget {
                       fontSize: 16,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w700,
-                      height: 0,
                       letterSpacing: -0.33,
                     ),
                   ),
@@ -161,7 +163,6 @@ class RiwayatIzin extends StatelessWidget {
                       fontSize: 13,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w400,
-                      height: 0,
                       letterSpacing: -0.33,
                     ),
                   ),
@@ -188,7 +189,6 @@ class RiwayatIzin extends StatelessWidget {
                               fontSize: 12,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w600,
-                              height: 0,
                               letterSpacing: -0.33,
                             ),
                           ),
@@ -207,7 +207,6 @@ class RiwayatIzin extends StatelessWidget {
                               fontSize: 16,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w700,
-                              height: 0,
                               letterSpacing: -0.33,
                             ),
                           ),
@@ -238,7 +237,6 @@ class RiwayatIzin extends StatelessWidget {
                               fontSize: 12,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w600,
-                              height: 0,
                               letterSpacing: -0.33,
                             ),
                           ),
@@ -257,7 +255,6 @@ class RiwayatIzin extends StatelessWidget {
                               fontSize: 12,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w400,
-                              height: 0,
                               letterSpacing: -0.33,
                             ),
                           ),
@@ -281,14 +278,9 @@ class RiwayatIzin extends StatelessWidget {
                         child: Container(
                           width: 33,
                           height: 24,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 1.38, vertical: 5),
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [],
                           ),
                         ),
@@ -299,14 +291,9 @@ class RiwayatIzin extends StatelessWidget {
                         child: Container(
                           width: 33,
                           height: 24,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 1.38, vertical: 5),
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [],
                           ),
                         ),
@@ -317,14 +304,9 @@ class RiwayatIzin extends StatelessWidget {
                         child: Container(
                           width: 33,
                           height: 24,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 1.38, vertical: 5),
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [],
                           ),
                         ),
@@ -341,18 +323,12 @@ class RiwayatIzin extends StatelessWidget {
                   height: 56,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                       image: NetworkImage(
-                                '${ApiUrls.baseUrl}/${userData['photo']}'),
-                       
+                      image: NetworkImage('${ApiUrls.baseUrl}/${userData['photo']}'),
                       fit: BoxFit.fill,
                     ),
                   ),
                 ),
               ),
-             
-             
-             
-             
               Positioned(
                 left: 32,
                 top: 300,
@@ -366,162 +342,115 @@ class RiwayatIzin extends StatelessWidget {
                       fontSize: 16,
                       fontFamily: 'Poppins',
                       fontWeight: FontWeight.w500,
-                      height: 0,
                       letterSpacing: -0.33,
                     ),
                   ),
                 ),
               ),
-              Positioned(
-                left: 32,
-                top: 320,
-                child: Container(
-                  width: 373,
-                  height: 65,
-                  child: Stack(
+               Positioned(
+  top: 300,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  child: Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: FutureBuilder<List<Map<String, dynamic>>>(
+      future: _fetchLeaveHistory(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(child: Text('No leave history found.'));
+        } else {
+          final leaveHistory = snapshot.data!;
+          return ListView.builder(
+            itemCount: leaveHistory.length,
+            itemBuilder: (context, index) {
+              final leave = leaveHistory[index];
+              Color badgeColor;
+              String badgeText;
+
+              switch (leave['status']) {
+                case 'Progress':
+                  badgeColor = Colors.orange;
+                  badgeText = 'In Progress';
+                  break;
+                case 'Reject':
+                  badgeColor = Colors.red;
+                  badgeText = 'Rejected';
+                  break;
+                case 'Approved':
+                  badgeColor = Colors.green;
+                  badgeText = 'Approved';
+                  break;
+                default:
+                  badgeColor = Colors.grey;
+                  badgeText = 'Unknown';
+              }
+
+              return Card(
+                elevation: 2,
+                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          width: 373,
-                          height: 65,
-                          decoration: ShapeDecoration(
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            shadows: [
-                              BoxShadow(
-                                color: Color(0x3F000000),
-                                blurRadius: 4,
-                                offset: Offset(0, 4),
-                                spreadRadius: 0,
-                              )
-                            ],
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: Colors.transparent,
+                            backgroundImage: NetworkImage('${ApiUrls.baseUrl}/${userData['photo']}'),
+                            onBackgroundImageError: (exception, stackTrace) {
+                              print('Image Error: $exception\n$stackTrace');
+                            },
                           ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 13.47,
-                        top: 13,
-                        child: Container(
-                          width: 43.52,
-                          height: 43,
-                          child: Stack(
+                          SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Positioned(
-                                left: 0,
-                                top: 0,
-                                child: Container(
-                                  width: 43.52,
-                                  height: 43,
-                                  decoration: ShapeDecoration(
-                                    color: Color(0x49716ACA),
-                                    shape: OvalBorder(
-                                      side: BorderSide(
-                                          width: 1, color: Color(0x00716ACA)),
-                                    ),
-                                  ),
+                              Text(
+                                leave['kode_izin']?? 'Unknown',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
                               ),
-                              Positioned(
-                                left: 1.53,
-                                top: 3.02,
-                                child: Container(
-                                  width: 41.23,
-                                  height: 39.23,
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                      image: NetworkImage(
-                                          "https://via.placeholder.com/41x39"),
-                                      fit: BoxFit.fill,
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              SizedBox(height: 8),
+                              Text('Date: ${leave['tgl_izin_dari']?? 'Unknown'}'),
                             ],
                           ),
-                        ),
+                        ],
                       ),
-                      Positioned(
-                        left: 63.20,
-                        top: 14,
-                        child: SizedBox(
-                          width: 102.57,
-                          height: 21,
-                          child: Text(
-                            'Izin Sakit',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 13,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: badgeColor,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      ),
-                      Positioned(
-                        left: 63.20,
-                        top: 33,
-                        child: SizedBox(
-                          width: 102.57,
-                          height: 19,
-                          child: Text(
-                            '07 September 2023',
-                            style: TextStyle(
-                              color: Color(0xFF666666),
-                              fontSize: 10,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w500,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 290,
-                        top: 24,
-                        child: Container(
-                          width: 60,
-                          height: 17,
-                          decoration: ShapeDecoration(
-                            color: Color(0xFFFF0101),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 299,
-                        top: 27,
-                        child: SizedBox(
-                          width: 42,
-                          height: 11,
-                          child: Text(
-                            'Menunggu',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 7,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
+                        child: Text(
+                          badgeText,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              
-            ]),
+              );
+            },
+          );
+        }
+      },
+    ),
+  ),
+),
+            ],
           ),
         ),
       ),
