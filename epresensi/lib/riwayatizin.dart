@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 
@@ -371,23 +372,28 @@ class RiwayatIzin extends StatelessWidget {
               final leave = leaveHistory[index];
               Color badgeColor;
               String badgeText;
+              IconData badgeIcon;
 
               switch (leave['status']) {
                 case 'Progress':
                   badgeColor = Colors.orange;
                   badgeText = 'In Progress';
+                  badgeIcon = FontAwesomeIcons.clock;
                   break;
                 case 'Reject':
                   badgeColor = Colors.red;
                   badgeText = 'Rejected';
+                  badgeIcon = FontAwesomeIcons.times;
                   break;
                 case 'Approved':
                   badgeColor = Colors.green;
                   badgeText = 'Approved';
+                  badgeIcon = FontAwesomeIcons.check;
                   break;
                 default:
                   badgeColor = Colors.grey;
                   badgeText = 'Unknown';
+                  badgeIcon = FontAwesomeIcons.question;
               }
 
               return Card(
@@ -431,12 +437,18 @@ class RiwayatIzin extends StatelessWidget {
                           color: badgeColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Text(
-                          badgeText,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
+                        child: Row(
+                          children: [
+                            Icon(badgeIcon, size: 12, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text(
+                              badgeText,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
