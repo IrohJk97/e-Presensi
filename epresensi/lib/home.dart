@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:epresensi/FormAbsen.dart';
 import 'package:epresensi/FormCuti.dart';
 import 'package:epresensi/Profile.dart';
 import 'package:epresensi/login.dart';
@@ -86,7 +87,7 @@ class _HomeState extends State<Home> {
           
           Profile(userData: _userData),
           FormCuti(userData: _userData),
-          Center(child: Text('Fingerprint Page')),
+          FormAbsen(userData: _userData),
           FormIzin(userData: _userData),
           User(userData: _userData),
 

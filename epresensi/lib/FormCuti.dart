@@ -116,6 +116,7 @@ class _CutiState extends State<Cuti> {
             backgroundColor: Colors.blue,
             textColor: Colors.white,
           );
+          
           _resetForm();
         } else {
           Fluttertoast.showToast(

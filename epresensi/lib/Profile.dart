@@ -7,11 +7,35 @@ import 'package:http/http.dart' as http;
 class ApiUrls {
   static const String baseUrl = 'https://publicconcerns.online';
   static const String leaveHistoryUrl = '/api/cuti/history';
+    static const String absensiHistoryUrl = '/api/absensi/history';
 }
 
 class Profile extends StatelessWidget {
   final Map<String, dynamic> userData;
   Profile({required this.userData});
+
+Future<Map<String, dynamic>> fetchAbsensi() async {
+  final response = await http.get(Uri.parse(
+    '${ApiUrls.baseUrl}${ApiUrls.absensiHistoryUrl}?nik=${userData['nik']}'
+  ));
+
+  if (response.statusCode == 200) {
+    final List<dynamic> data = json.decode(response.body);
+
+    if (data.isEmpty) {
+      throw Exception('No data found');
+    }
+
+    // Sort data by 'updated_at' to get the latest entry
+    data.sort((a, b) => DateTime.parse(b['updated_at']).compareTo(DateTime.parse(a['updated_at'])));
+
+    // Return the most recent entry
+    return data.first as Map<String, dynamic>;
+  } else {
+    throw Exception('Failed to load izin data');
+  }
+}
+
   Future<List<Map<String, dynamic>>> _fetchLeaveHistory() async {
     final response = await http.get(Uri.parse(
         '${ApiUrls.baseUrl}${ApiUrls.leaveHistoryUrl}?nik=${userData['nik']}'));
@@ -654,86 +678,103 @@ class Profile extends StatelessWidget {
                 ),
               ),
 
+Positioned(
+  left: 32,
+  top: 390,
+  child: Container(
+    width: 174,
+    height: 66,
+    child: FutureBuilder<Map<String, dynamic>>(
+      future: fetchAbsensi(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data == null) {
+          return Center(child: Text('No data available'));
+        } else {
+          final absensiData = snapshot.data;
+          final jamIn = absensiData?['jam_in'] ?? 'N/A'; // Fetch jam_in value
+
+          return Stack(
+            children: [
               Positioned(
-                left: 32,
-                top: 390,
+                left: 0,
+                top: 0,
                 child: Container(
                   width: 174,
                   height: 66,
-                  child: Stack(
-                    children: [
-                      Positioned(
-                        left: 0,
-                        top: 0,
-                        child: Container(
-                          width: 174,
-                          height: 66,
-                          decoration: ShapeDecoration(
-                            color: Color(0xFF50C0FF),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 13,
-                        top: 9,
-                        child: Container(
-                          width: 44,
-                          height: 46,
-                          clipBehavior: Clip.antiAlias,
-                          decoration: BoxDecoration(),
-                          child: Icon(
-                            Icons.calendar_today, // This sets the calendar icon
-                            size: 50.0, // You can adjust the size
-                            color: Colors.white, // You can change the color
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 66,
-                        top: 14,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            'Masuk',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        left: 79,
-                        top: 35,
-                        child: SizedBox(
-                          width: 86,
-                          height: 18,
-                          child: Text(
-                            '09 : 00 WIB',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontFamily: 'Poppins',
-                              fontWeight: FontWeight.w600,
-                              height: 0,
-                              letterSpacing: -0.33,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  decoration: ShapeDecoration(
+                    color: Color(0xFF50C0FF),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
+              Positioned(
+                left: 13,
+                top: 9,
+                child: Container(
+                  width: 44,
+                  height: 46,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(),
+                  child: Icon(
+                    Icons.calendar_today,
+                    size: 50.0,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 66,
+                top: 14,
+                child: SizedBox(
+                  width: 86,
+                  height: 18,
+                  child: Text(
+                    'Masuk',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      height: 0,
+                      letterSpacing: -0.33,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 66,
+                top: 35,
+                child: SizedBox(
+                  width: 86,
+                  height: 18,
+                  child: Text(
+                    '$jamIn', // Display the jam_in value
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w600,
+                      height: 0,
+                      letterSpacing: -0.33,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+      },
+    ),
+  ),
+),
               Positioned(
                 left: 228,
                 top: 390,

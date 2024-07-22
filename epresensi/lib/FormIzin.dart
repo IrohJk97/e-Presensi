@@ -169,7 +169,6 @@ class _FormIzinState extends State<FormIzin> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Izin Karyawan'),
-        backgroundColor: Colors.blue,
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
