@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:epresensi/AttendanceHistoryScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -122,7 +123,8 @@ Future<Map<String, dynamic>> fetchAbsensi() async {
           // Other properties of the AppBar can be set here
         ),
         body: SafeArea(
-          child: Container(
+          child: 
+          Container(
             width: 430,
             height: 932,
             clipBehavior: Clip.antiAlias,
@@ -467,25 +469,35 @@ Future<Map<String, dynamic>> fetchAbsensi() async {
                   ),
                 ),
               ),
-              Positioned(
-                left: 32,
-                top: 300,
-                child: SizedBox(
-                  width: 246,
-                  height: 27,
-                  child: Text(
-                    'Riwayat Presensi',
-                    style: TextStyle(
-                      color: Color(0xFF666666),
-                      fontSize: 16,
-                      fontFamily: 'Poppins',
-                      fontWeight: FontWeight.w500,
-                      height: 0,
-                      letterSpacing: -0.33,
-                    ),
-                  ),
-                ),
-              ),
+          Positioned(
+  left: 32,
+  top: 300,
+  child: SizedBox(
+    width: 246,
+    height: 27,
+    child: InkWell(
+      onTap: () {
+        // Handle the click event
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AttendanceHistoryScreen(userData: userData),),
+        );
+      },
+      child: Text(
+        'Riwayat Presensi',
+        style: TextStyle(
+          color: Color(0xFF666666),
+          fontSize: 16,
+          fontFamily: 'Poppins',
+          fontWeight: FontWeight.w500,
+          height: 0,
+          letterSpacing: -0.33,
+        ),
+      ),
+    ),
+  ),
+),
+
               Positioned(
                 left: 32,
                 top: 320,
