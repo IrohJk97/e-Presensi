@@ -93,6 +93,7 @@ flutter:
    - assets/images/stepThree.png
    - assets/images/stepFour.png
    - assets/images/logo.svg
+   - assets/images/logo.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/date_symbol_data_local.dart';
 
 class ApiUrls {
   static const String baseUrl = 'https://publicconcerns.online';
-  static const String leaveHistoryUrl = '/api/izin/history'; // Update with your actual endpoint
+  static const String leaveHistoryUrl =
+      '/api/izin/history'; // Update with your actual endpoint
 }
 
 class RiwayatIzin extends StatelessWidget {
@@ -23,29 +25,30 @@ class RiwayatIzin extends StatelessWidget {
     print('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
-    try {
-      final Map<String, dynamic> responseData = json.decode(response.body);
+      try {
+        final Map<String, dynamic> responseData = json.decode(response.body);
 
-      // Check if the 'data' field is a list
-      final List<dynamic> data = responseData['data'];
-      if (data is List) {
-        return data.map((item) {
-          if (item is Map<String, dynamic>) {
-            return item;
-          } else {
-            throw Exception('Unexpected data format in list');
-          }
-        }).toList();
-      } else {
-        throw Exception('Response data does not contain a list under "data"');
+        // Check if the 'data' field is a list
+        final List<dynamic> data = responseData['data'];
+        if (data is List) {
+          return data.map((item) {
+            if (item is Map<String, dynamic>) {
+              return item;
+            } else {
+              throw Exception('Unexpected data format in list');
+            }
+          }).toList();
+        } else {
+          throw Exception('Response data does not contain a list under "data"');
+        }
+      } catch (e) {
+        print('Error parsing response body: $e');
+        throw Exception('Failed to parse leave history data');
       }
-    } catch (e) {
-      print('Error parsing response body: $e');
-      throw Exception('Failed to parse leave history data');
+    } else {
+      throw Exception(
+          'Failed to load leave history, status code: ${response.statusCode}');
     }
-  } else {
-    throw Exception('Failed to load leave history, status code: ${response.statusCode}');
-  }
   }
 
   @override
@@ -53,7 +56,6 @@ class RiwayatIzin extends StatelessWidget {
     String currentDate = DateFormat('yyyyMMdd').format(DateTime.now());
 
     return Scaffold(
-    
       body: SafeArea(
         child: Container(
           width: double.infinity,
@@ -122,7 +124,8 @@ class RiwayatIzin extends StatelessWidget {
                           decoration: ShapeDecoration(
                             color: Color(0x3D00A3FF),
                             shape: CircleBorder(
-                              side: BorderSide(width: 1, color: Color(0x00716ACA)),
+                              side: BorderSide(
+                                  width: 1, color: Color(0x00716ACA)),
                             ),
                           ),
                         ),
@@ -140,7 +143,8 @@ class RiwayatIzin extends StatelessWidget {
                           child: CircleAvatar(
                             radius: 30,
                             backgroundColor: Colors.transparent,
-                            backgroundImage: NetworkImage('${ApiUrls.baseUrl}/${userData['photo']}'),
+                            backgroundImage: NetworkImage(
+                                '${ApiUrls.baseUrl}/${userData['photo']}'),
                             onBackgroundImageError: (exception, stackTrace) {
                               print('Image Error: $exception\n$stackTrace');
                             },
@@ -342,7 +346,8 @@ class RiwayatIzin extends StatelessWidget {
                   height: 56,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: NetworkImage('${ApiUrls.baseUrl}/${userData['photo']}'),
+                      image: NetworkImage(
+                          '${ApiUrls.baseUrl}/${userData['photo']}'),
                       fit: BoxFit.fill,
                     ),
                   ),
@@ -366,127 +371,151 @@ class RiwayatIzin extends StatelessWidget {
                   ),
                 ),
               ),
-               Positioned(
-  top: 300,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  child: Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: FutureBuilder<List<Map<String, dynamic>>>(
-      future: _fetchLeaveHistory(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return Center(child: Text('No leave history found.'));
-        } else {
-          final leaveHistory = snapshot.data!;
-          return ListView.builder(
-            itemCount: leaveHistory.length,
-            itemBuilder: (context, index) {
-              final leave = leaveHistory[index];
-              Color badgeColor;
-              String badgeText;
-              IconData badgeIcon;
-
-              switch (leave['status']) {
-                case 'Progress':
-                  badgeColor = Colors.orange;
-                  badgeText = 'In Progress';
-                  badgeIcon = FontAwesomeIcons.clock;
-                  break;
-                case 'Reject':
-                  badgeColor = Colors.red;
-                  badgeText = 'Rejected';
-                  badgeIcon = FontAwesomeIcons.times;
-                  break;
-                case 'Approved':
-                  badgeColor = Colors.green;
-                  badgeText = 'Approved';
-                  badgeIcon = FontAwesomeIcons.check;
-                  break;
-                default:
-                  badgeColor = Colors.grey;
-                  badgeText = 'Unknown';
-                  badgeIcon = FontAwesomeIcons.question;
-              }
-
-              return Card(
-                elevation: 2,
-                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              Positioned(
+                top: 300,
+                left: 0,
+                right: 0,
+                bottom: 0,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: Colors.transparent,
-                            backgroundImage: NetworkImage('${ApiUrls.baseUrl}/${userData['photo']}'),
-                            onBackgroundImageError: (exception, stackTrace) {
-                              print('Image Error: $exception\n$stackTrace');
-                            },
-                          ),
-                          SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                leave['kode_izin']?? 'Unknown',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text('Date: ${leave['tgl_izin_dari']?? 'Unknown'}'),
-                            ],
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: badgeColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(badgeIcon, size: 12, color: Colors.white),
-                            SizedBox(width: 4),
-                            Text(
-                              badgeText,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  child: FutureBuilder<List<Map<String, dynamic>>>(
+                    future: _fetchLeaveHistory(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return Center(child: Text('No leave history found.'));
+                      } else {
+                        final leaveHistory = snapshot.data!;
+                        return ListView.builder(
+                          itemCount: leaveHistory.length,
+                          itemBuilder: (context, index) {
+                            final leave = leaveHistory[index];
+                            Color badgeColor;
+                            String badgeText;
+                            IconData badgeIcon;
+                            switch (leave['status_approved']) {
+                              case 'Progress':
+                                badgeColor = Colors.orange;
+                                badgeText = 'In Progress';
+                                badgeIcon = FontAwesomeIcons.clock;
+                                break;
+                              case 'Rejected':
+                                badgeColor = Colors.red;
+                                badgeText = 'Rejected';
+                                badgeIcon = FontAwesomeIcons.times;
+                                break;
+                              case 'Approved':
+                                badgeColor = Colors.green;
+                                badgeText = 'Approved';
+                                badgeIcon = FontAwesomeIcons.check;
+                                break;
+                              default:
+                                badgeColor = Colors.grey;
+                                badgeText = 'Unknown';
+                                badgeIcon = FontAwesomeIcons.question;
+                            }
+
+                        return Card(
+  elevation: 2,
+  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+  child: Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.transparent,
+              backgroundImage: NetworkImage('${ApiUrls.baseUrl}/${userData['photo']}'),
+              onBackgroundImageError: (exception, stackTrace) {
+                print('Image Error: $exception\n$stackTrace');
+              },
+            ),
+            SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  leave['kode_izin'] ?? 'Unknown',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
-              );
-            },
-          );
-        }
-      },
+                SizedBox(height: 8),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 20, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text(
+                      'From: ${leave['tgl_izin_dari']}',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 20, color: Colors.grey),
+                    SizedBox(width: 8),
+                    Text(
+                      'To: ${leave['tgl_izin_sampai']}',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        Container(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: badgeColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              Icon(badgeIcon, size: 12, color: Colors.white),
+              SizedBox(width: 4),
+              Text(
+                badgeText,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     ),
   ),
-),
+);
+
+                            
+                          },
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+  
 }
+
+
 
 class LeaveHistoryItem extends StatelessWidget {
   final String leaveType;
