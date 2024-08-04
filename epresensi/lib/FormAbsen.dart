@@ -27,7 +27,7 @@ class _FormAbsenState extends State<FormAbsen> {
   final _latController = TextEditingController();
   File? _image;
   LatLng _currentLocation = LatLng(0, 0);
-  LatLng _branchLocation = LatLng(0, 0); // Initialize this to a default value
+  LatLng _branchLocation = LatLng(0, 0); // Example branch location
 
   final ImagePicker _picker = ImagePicker();
   final Location _location = Location();
@@ -42,32 +42,79 @@ class _FormAbsenState extends State<FormAbsen> {
     try {
       final locationData = await _location.getLocation();
       setState(() {
-        _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
-        _latController.text = locationData.latitude.toString();
-        _longController.text = locationData.longitude.toString();
+        // Update the current location with latitude and longitude from locationData
+        _currentLocation =
+            LatLng(locationData.latitude!, locationData.longitude!);
+
+        // Update text fields with current location if userData is not null
+        _latController.text = widget.userData['latitude']?.toString() ??
+            locationData.latitude.toString();
+        _longController.text = widget.userData['longitude']?.toString() ??
+            locationData.longitude.toString();
+
+        // Convert latitude and longitude from userData to double
+        double branchLat =
+            double.tryParse(widget.userData['latitude']?.toString() ?? '0.0') ??
+                0.0;
+        double branchLng = double.tryParse(
+                widget.userData['longitude']?.toString() ?? '0.0') ??
+            0.0;
+
+        // Print debug information
+        print('User Data Latitude: ${widget.userData['latitude']}');
+        print('User Data Longitude: ${widget.userData['longitude']}');
+        print('Parsed Branch Latitude: $branchLat');
+        print('Parsed Branch Longitude: $branchLng');
+
+        // Update branch location
+        _branchLocation = LatLng(branchLat, branchLng);
+
+        // Print branch location for debugging
+        print('Branch Location: $_branchLocation');
       });
     } catch (e) {
       print(e);
     }
   }
 
+  // Method to calculate distance
+  double _calculateDistance(LatLng start, LatLng end) {
+    final Distance distance = Distance();
+    return distance.as(LengthUnit.Meter, start, end);
+  }
+
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
       if (_image == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Please upload a photo'),
-          ),
+        _showAlertDialog(
+          title: "Missing Photo",
+          message: "Please upload a photo.",
+          isError: true,
+        );
+        return;
+        return;
+      }
+
+      // Check if the distance is within the allowed radius
+      double distance = _calculateDistance(_currentLocation, _branchLocation);
+
+      if (distance > 2000) {
+        // Radius of 200 meters
+
+        _showAlertDialog(
+          title: "Radius outside",
+          message: "You are outside the allowed radius for absensi.",
+          isError: true,
         );
         return;
       }
 
       final response = await _insertPresensi();
       if (response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Presensi submitted successfully'),
-          ),
+        _showAlertDialog(
+          title: "Presensi Success",
+          message: "Presensi submitted successfully.",
+          isError: false,
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -80,7 +127,8 @@ class _FormAbsenState extends State<FormAbsen> {
   }
 
   Future<http.Response> _insertPresensi() async {
-    final url = 'https://publicconcerns.online/api/absensi/store'; // Replace with your API URL
+    final url =
+        'https://publicconcerns.online/api/absensi/store'; // Replace with your API URL
     final request = http.MultipartRequest('POST', Uri.parse(url));
 
     String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -91,7 +139,8 @@ class _FormAbsenState extends State<FormAbsen> {
     request.fields['tgl_presensi'] = currentDate;
     request.fields['jam_in'] = currentTime;
     request.fields['jam_out'] = "";
-    request.fields['lokasi_in'] = '${_latController.text},${_longController.text}'; // Set to latitude and longitude
+    request.fields['lokasi_in'] =
+        '${_latController.text},${_longController.text}'; // Set to latitude and longitude
     request.fields['lokasi_out'] = ""; // Set to latitude and longitude
     request.fields['kode_jam_kerja'] = "J01";
     request.fields['status'] = "progress";
@@ -183,7 +232,7 @@ class _FormAbsenState extends State<FormAbsen> {
                                       fit: BoxFit.cover,
                                     ),
                                   )
-                                : Icon(Icons.camera_alt, size: 40),
+                                : Icon(Icons.camera_alt, size: 90),
                             SizedBox(height: 10),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -211,42 +260,51 @@ class _FormAbsenState extends State<FormAbsen> {
                 Container(
                   height: 300, // Adjust height if necessary
                   child: FlutterMap(
-                    // options: MapOptions(
-                    //   center: _currentLocation,
-                    //   zoom: 13.0,
-                    // ),
+                    options: MapOptions(
+                        // center: _currentLocation,
+                        // zoom: 13.0,
+                        ),
                     children: [
                       TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         maxZoom: 19,
                       ),
-                      // MarkerLayer(
-                      //   markers: [
-                      //     Marker(
-                      //       point: _currentLocation,
-                      //       builder: (context) => Container(
-                      //         child: Icon(Icons.location_on, color: Colors.blue, size: 40),
-                      //       ),
-                      //     ),
-                      //     Marker(
-                      //       point: _branchLocation,
-                      //       builder: (context) => Container(
-                      //         child: Icon(Icons.location_city, color: Colors.red, size: 40),
-                      //       ),
-                      //     ),
-                      //   ],
-                      // ),
+                      MarkerLayer(
+                        markers: [
+                          // Marker(
+                          //   point: _currentLocation,
+                          //   builder: (context) => Container(
+                          //     child: Icon(
+                          //       Icons.location_on,
+                          //       color: Colors.blue,
+                          //       size: 40,
+                          //     ),
+                          //   ),
+                          // ),
+                          // Marker(
+                          //   point: _branchLocation,
+                          //   builder: (context) => Container(
+                          //     child: Icon(
+                          //       Icons.location_city,
+                          //       color: Colors.red,
+                          //       size: 40,
+                          //     ),
+                          //   ),
+                          // ),
+                        ],
+                      ),
                       CurrentLocationLayer(
                         followOnLocationUpdate: FollowOnLocationUpdate.always,
                         turnOnHeadingUpdate: TurnOnHeadingUpdate.never,
                         style: LocationMarkerStyle(
-                          marker: const DefaultLocationMarker(
+                          marker: DefaultLocationMarker(
                             child: Icon(
                               Icons.navigation,
                               color: Colors.white,
                             ),
                           ),
-                          markerSize: const Size(40, 40),
+                          markerSize: Size(40, 40),
                           markerDirection: MarkerDirection.heading,
                         ),
                       ),
@@ -282,25 +340,16 @@ class _FormAbsenState extends State<FormAbsen> {
                   },
                 ),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      if (_image == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Please upload a photo'),
-                          ),
-                        );
-                        return;
-                      }
-                      // Show confirmation dialog
-                      _showConfirmationDialog();
-                    }
-                  },
-                  child: Text('Submit Absensi'),
+                ElevatedButton.icon(
+                  onPressed: _showConfirmationDialog,
+                  icon: Icon(
+                    Icons.check_circle, // Choose your icon here
+                    color: Colors.white, // Set the color of the icon
+                  ),
+                  label: Text('Kirim Presensi Hari Ini'),
                   style: ElevatedButton.styleFrom(
                     foregroundColor: Colors.white,
-                    backgroundColor: Colors.blueAccent,
+                    backgroundColor: Colors.blue, // Set the color of the text
                   ),
                 ),
               ],
@@ -313,19 +362,74 @@ class _FormAbsenState extends State<FormAbsen> {
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
+    setState(() {
+      if (pickedFile != null) {
         _image = File(pickedFile.path);
-      });
-    }
+      }
+    });
   }
 
   Future<void> _takePhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      setState(() {
+    setState(() {
+      if (pickedFile != null) {
         _image = File(pickedFile.path);
-      });
-    }
+      }
+    });
   }
+
+void _showAlertDialog({
+  required String title,
+  required String message,
+  required bool isError,
+}) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      // Automatically close the dialog after 3 seconds
+      Future.delayed(Duration(seconds: 3), () {
+        Navigator.of(context).pop(); // Close the dialog
+      });
+
+      return Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        child: Container(
+          padding: EdgeInsets.all(20.0),
+          height: 250.0, // Set the height of the dialog
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.calendar_today, // Calendar icon
+                color: isError ? Colors.red : Colors.green,
+                size: 120.0, // Big icon size
+              ),
+              SizedBox(height: 10),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                  color: isError ? Colors.red : Colors.green,
+                ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isError ? Colors.red : Colors.green,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+
 }
