@@ -28,11 +28,21 @@ class _FormIzinState extends State<FormIzin> {
   String? _selectedJenisCuti;
   String? _keperluan;
 
+  List<Map<String, String>> _jenisIzinList = [];
+  String? _selectedKodeCuti;
+  String? _selectedNamaCuti;
+
   @override
   void dispose() {
     _controller.dispose();
     _returnController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchJenisIzin();
   }
 
   Future<void> _pickFile() async {
@@ -44,113 +54,133 @@ class _FormIzinState extends State<FormIzin> {
     }
   }
 
-  Future<void> _submitForm() async {
-    // Your API URL
-    final apiUrl = 'https://publicconcerns.online/api/izin/store';
-
-    // Prepare request
-    var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-
-    String formatDate(DateTime? date) {
-      if (date == null) return '';
-      return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    }
-
-    request.fields['nik'] = widget.userData['nik'] ?? '';
-    request.fields['tgl_izin_dari'] =
-        formatDate(_selectedDate); // Convert to 'YYYY-MM-DD'
-    request.fields['tgl_izin_sampai'] =
-        formatDate(_selectedReturnDate); // Convert to 'YYYY-MM-DD'
-    request.fields['kode_izin'] = _selectedJenisCuti ?? '';
-    request.fields['keterangan'] = _keperluan ?? '';
-
-    if (_pickedFile != null) {
-      var file = http.MultipartFile(
-        'doc_sid',
-        File(_pickedFile!.path!).readAsBytes().asStream(),
-        File(_pickedFile!.path!).lengthSync(),
-        filename: _pickedFile!.name,
-        contentType: MediaType.parse(
-            lookupMimeType(_pickedFile!.path!) ?? 'application/octet-stream'),
-      );
-      request.files.add(file);
-    }
-
-    // Send request
+  Future<void> _fetchJenisIzin() async {
     try {
-      final response = await request.send();
-      final responseBody = await response.stream.bytesToString();
+      final response = await http
+          .get(Uri.parse('https://publicconcerns.online/api/cuti/getData'));
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: $responseBody');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+              print('Response body 1: ${data}');
 
-      if (response.statusCode == 201) {
-        // Handle successful response
-        Alert(
-          context: context,
-          type: AlertType.success,
-          title: "Congratulations!",
-          desc:
-              "Your leave application has been successfully uploaded. Please wait for admin to confirm it.",
-          buttons: [
-            DialogButton(
-              child: Text(
-                "Back To Dashboard",
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
-              onPressed: () {
-                Navigator.pop(context); // Close the alert dialog
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                      builder: (context) => Home(
-                            accessToken: '',
-                          )),
-                ); // Navigate to home screen
-              },
-              color: Colors.blue,
-            )
-          ],
-        ).show();
+        setState(() {
+          _jenisIzinList = data
+              .map((item) => {
+                    'kode_cuti': item['kode_cuti'].toString(),
+                    'nama_cuti': item['nama_cuti'].toString(),
+                  })
+              .toList();
+        });
+        print('Jenis Izin List: $_jenisIzinList');
       } else {
-        // Handle error response
-        Alert(
-          context: context,
-          type: AlertType.error,
-          title: "Error",
-          desc: "There was an error submitting the form.",
-          buttons: [
-            DialogButton(
-              child: Text(
-                "OK",
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
-              onPressed: () => Navigator.pop(context),
-              color: Colors.red,
-            )
-          ],
-        ).show();
+        throw Exception('Failed to load data');
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error fetching data: $e');
+    }
+  }
+
+Future<void> _submitForm() async {
+  final apiUrl = 'https://publicconcerns.online/api/izin/store';
+  var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
+
+  String formatDate(DateTime? date) {
+    if (date == null) return '';
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // Debug statements
+  print('nik: ${widget.userData['nik']}');
+  print('tgl_izin_dari: ${formatDate(_selectedDate)}');
+  print('tgl_izin_sampai: ${formatDate(_selectedReturnDate)}');
+  print('kode_izin: $_selectedKodeCuti');
+  print('keterangan: $_keperluan');
+
+  request.fields['nik'] = widget.userData['nik'] ?? '';
+  request.fields['tgl_izin_dari'] = formatDate(_selectedDate);
+  request.fields['tgl_izin_sampai'] = formatDate(_selectedReturnDate);
+  request.fields['kode_izin'] = _selectedKodeCuti ?? '';
+  request.fields['keterangan'] = _keperluan ?? '';
+
+  if (_pickedFile != null) {
+    try {
+      var file = File(_pickedFile!.path!);
+      var fileStream = file.openRead();
+      var fileLength = await file.length();
+      var mimeType = lookupMimeType(_pickedFile!.path!) ?? 'application/octet-stream';
+
+      var multipartFile = http.MultipartFile(
+        'doc_sid',
+        fileStream,
+        fileLength,
+        filename: _pickedFile!.name,
+        contentType: MediaType.parse(mimeType),
+      );
+
+      request.files.add(multipartFile);
+    } catch (e) {
+      print('Error reading file: $e');
+    }
+  }
+
+  try {
+    final response = await request.send();
+    final responseBody = await response.stream.bytesToString();
+
+    print('Response status: ${response.statusCode}');
+    print('Response body: $responseBody');
+
+    if (response.statusCode == 201) {
+      Alert(
+        context: context,
+        type: AlertType.success,
+        title: "Congratulations!",
+        desc: "Your leave application has been successfully uploaded.",
+        buttons: [
+          DialogButton(
+            child: Text("Back To Dashboard", style: TextStyle(color: Colors.white, fontSize: 20)),
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(builder: (context) => Home(accessToken: '')),
+              );
+            },
+            color: Colors.blue,
+          )
+        ],
+      ).show();
+    } else {
       Alert(
         context: context,
         type: AlertType.error,
         title: "Error",
-        desc: "An unexpected error occurred.",
+        desc: "There was an error submitting the form.",
         buttons: [
           DialogButton(
-            child: Text(
-              "OK",
-              style: TextStyle(color: Colors.white, fontSize: 20),
-            ),
+            child: Text("OK", style: TextStyle(color: Colors.white, fontSize: 20)),
             onPressed: () => Navigator.pop(context),
             color: Colors.red,
           )
         ],
       ).show();
     }
+  } catch (e) {
+    print('Error: $e');
+    Alert(
+      context: context,
+      type: AlertType.error,
+      title: "Error",
+      desc: "An unexpected error occurred.",
+      buttons: [
+        DialogButton(
+          child: Text("OK", style: TextStyle(color: Colors.white, fontSize: 20)),
+          onPressed: () => Navigator.pop(context),
+          color: Colors.red,
+        )
+      ],
+    ).show();
   }
-
+}
   void _resetForm() {
     setState(() {
       _formKey.currentState?.reset(); // Reset form fields
@@ -205,31 +235,42 @@ class _FormIzinState extends State<FormIzin> {
                               style: TextStyle(fontSize: 16.0),
                             ),
                             SizedBox(height: 16.0),
-                            DropdownButtonFormField<String>(
-                              decoration: InputDecoration(
-                                labelText: 'Jenis Izin',
-                                border: OutlineInputBorder(),
-                              ),
-                              value: _selectedJenisCuti,
-                              items: [
-                                DropdownMenuItem(
-                                  value: 'Cuti Tahunan',
-                                  child: Text('Cuti Tahunan'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'Cuti Sakit',
-                                  child: Text('Cuti Sakit'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedJenisCuti = value;
-                                });
-                              },
-                              validator: (value) => value == null
-                                  ? 'Please select a cuti type'
-                                  : null,
+                               DropdownButtonFormField<String>(
+                            decoration: InputDecoration(
+                              labelText: 'Jenis Izin',
+                              border: OutlineInputBorder(),
                             ),
+                            value: _selectedKodeCuti,
+                            items: _jenisIzinList.isEmpty
+                                ? [
+                                    DropdownMenuItem<String>(
+                                      value: null,
+                                      child: Text('No options available'),
+                                    ),
+                                  ]
+                                : _jenisIzinList
+                                    .map((Map<String, String> value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value['kode_cuti'],
+                                      child: Text(value['nama_cuti']!),
+                                    );
+                                  }).toList(),
+                            hint: Text('Select a jenis izin'),
+                            onChanged: (value) {
+                              print('value: ${value}');
+
+                              setState(() {
+                                _selectedKodeCuti = value;
+                                _selectedNamaCuti = _jenisIzinList.firstWhere(
+                                    (item) => item['kode_cuti'] == value,
+                                    orElse: () =>
+                                        {'nama_cuti': ''})['nama_cuti'];
+                              });
+                            },
+                            validator: (value) => value == null
+                                ? 'Please select a cuti type'
+                                : null,
+                          ),
                             SizedBox(height: 16.0),
                             TextFormField(
                               controller: _controller,

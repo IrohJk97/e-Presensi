@@ -54,7 +54,7 @@ class RiwayatIzin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String currentDate = DateFormat('yyyyMMdd').format(DateTime.now());
-
+bool _isExpanded = false;
     return Scaffold(
       body: SafeArea(
         child: Container(
@@ -418,87 +418,104 @@ class RiwayatIzin extends StatelessWidget {
                                 badgeIcon = FontAwesomeIcons.question;
                             }
 
-                        return Card(
-  elevation: 2,
-  margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-  child: Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+                return Card(
+      elevation: 2,
+      margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Colors.transparent,
-              backgroundImage: NetworkImage('${ApiUrls.baseUrl}/${userData['photo']}'),
-              onBackgroundImageError: (exception, stackTrace) {
-                print('Image Error: $exception\n$stackTrace');
-              },
-            ),
-            SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  leave['kode_izin'] ?? 'Unknown',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.transparent,
+                      backgroundImage: NetworkImage(
+                          '${ApiUrls.baseUrl}/${userData['photo']}'),
+                      onBackgroundImageError: (exception, stackTrace) {
+                        print('Image Error: $exception\n$stackTrace');
+                      },
+                    ),
+                    SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          leave['kode_izin'] ?? 'Unknown',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today,
+                                size: 20, color: Colors.grey),
+                            SizedBox(width: 8),
+                            Text(
+                              'From: ${leave['tgl_izin_dari']}',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today,
+                                size: 20, color: Colors.grey),
+                            SizedBox(width: 8),
+                            Text(
+                              'To: ${leave['tgl_izin_sampai']}',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: badgeColor,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                ),
-                SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 20, color: Colors.grey),
-                    SizedBox(width: 8),
-                    Text(
-                      'From: ${leave['tgl_izin_dari']}',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today, size: 20, color: Colors.grey),
-                    SizedBox(width: 8),
-                    Text(
-                      'To: ${leave['tgl_izin_sampai']}',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ],
+                  child: Row(
+                    children: [
+                      Icon(badgeIcon, size: 12, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text(
+                        badgeText,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
+            SizedBox(height: 16),
+         
+            if (_isExpanded) ...[
+              SizedBox(height: 16),
+              // Additional details here
+              Text(
+                'Additional details can be shown here...',
+                style: TextStyle(fontSize: 14),
+              ),
+              // You can add more widgets to display additional information
+            ],
           ],
         ),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: badgeColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Icon(badgeIcon, size: 12, color: Colors.white),
-              SizedBox(width: 4),
-              Text(
-                badgeText,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  ),
-);
+      ),
+    );
 
-                            
                           },
                         );
                       }
@@ -512,7 +529,6 @@ class RiwayatIzin extends StatelessWidget {
       ),
     );
   }
-  
 }
 
 

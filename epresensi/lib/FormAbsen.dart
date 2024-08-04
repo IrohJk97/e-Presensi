@@ -27,6 +27,7 @@ class _FormAbsenState extends State<FormAbsen> {
   final _latController = TextEditingController();
   File? _image;
   LatLng _currentLocation = LatLng(0, 0);
+  LatLng _branchLocation = LatLng(0, 0); // Initialize this to a default value
 
   final ImagePicker _picker = ImagePicker();
   final Location _location = Location();
@@ -41,8 +42,7 @@ class _FormAbsenState extends State<FormAbsen> {
     try {
       final locationData = await _location.getLocation();
       setState(() {
-        _currentLocation =
-            LatLng(locationData.latitude!, locationData.longitude!);
+        _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
         _latController.text = locationData.latitude.toString();
         _longController.text = locationData.longitude.toString();
       });
@@ -53,8 +53,6 @@ class _FormAbsenState extends State<FormAbsen> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      print("Latitude: ${_latController.text}");
-      print("Longitude: ${_longController.text}");
       if (_image == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -65,7 +63,6 @@ class _FormAbsenState extends State<FormAbsen> {
       }
 
       final response = await _insertPresensi();
-      print(response.body);
       if (response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -87,7 +84,7 @@ class _FormAbsenState extends State<FormAbsen> {
     final request = http.MultipartRequest('POST', Uri.parse(url));
 
     String currentDate = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    String currentTime =  DateFormat('HH:mm:ss').format(DateTime.now());
+    String currentTime = DateFormat('HH:mm:ss').format(DateTime.now());
     String nik = widget.userData['nik'] ?? 'unknown';
 
     request.fields['nik'] = nik;
@@ -100,9 +97,6 @@ class _FormAbsenState extends State<FormAbsen> {
     request.fields['status'] = "progress";
     request.fields['kode_izin'] = "K01";
 
-
-
-
     // Add the image file for foto_in and foto_out
     if (_image != null) {
       request.files.add(await http.MultipartFile.fromPath(
@@ -114,7 +108,6 @@ class _FormAbsenState extends State<FormAbsen> {
         _image!.path,
       ));
     }
-  
 
     final streamedResponse = await request.send();
     return await http.Response.fromStream(streamedResponse);
@@ -218,16 +211,31 @@ class _FormAbsenState extends State<FormAbsen> {
                 Container(
                   height: 300, // Adjust height if necessary
                   child: FlutterMap(
-                    options: MapOptions(
-                      // center: _currentLocation,
-                      // zoom: 13.0,
-                    ),
+                    // options: MapOptions(
+                    //   center: _currentLocation,
+                    //   zoom: 13.0,
+                    // ),
                     children: [
                       TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                         maxZoom: 19,
                       ),
+                      // MarkerLayer(
+                      //   markers: [
+                      //     Marker(
+                      //       point: _currentLocation,
+                      //       builder: (context) => Container(
+                      //         child: Icon(Icons.location_on, color: Colors.blue, size: 40),
+                      //       ),
+                      //     ),
+                      //     Marker(
+                      //       point: _branchLocation,
+                      //       builder: (context) => Container(
+                      //         child: Icon(Icons.location_city, color: Colors.red, size: 40),
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                       CurrentLocationLayer(
                         followOnLocationUpdate: FollowOnLocationUpdate.always,
                         turnOnHeadingUpdate: TurnOnHeadingUpdate.never,
@@ -305,15 +313,19 @@ class _FormAbsenState extends State<FormAbsen> {
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    setState(() {
-      _image = pickedFile != null ? File(pickedFile.path) : null;
-    });
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
   }
 
   Future<void> _takePhoto() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-    setState(() {
-      _image = pickedFile != null ? File(pickedFile.path) : null;
-    });
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
   }
 }

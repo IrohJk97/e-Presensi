@@ -9,9 +9,10 @@
             android:gravity="center"
             android:src="@mipmap/launch_image" />
     </item> -->
-    <item>
+    <!-- <item>
         <bitmap
             android:gravity="center"
-            android:src="@drawable/logo" /> <!-- Ensure the logo is named as 'logo.png' -->
-    </item>
+            android:src="@drawable/logo" /> 
+    </item> -->
+    
 </layer-list>
